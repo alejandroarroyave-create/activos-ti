@@ -1,56 +1,29 @@
-const equipos = [
-    {
-        codigo: "LAPTOP-DA-RE-12",
-        origen: "Rentado",
-        marca: "Lenovo",
-        modelo: "ThinkPad T14",
-        serial: "ABC123456",
-        estado: "Disponible",
-        asignadoA: "",
-        observaciones: ""
-    },
-    {
-        codigo: "MAC-PRO",
-        origen: "Corporativo",
-        marca: "Apple",
-        modelo: "MacBook Pro 14",
-        serial: "XYZ987654",
-        estado: "Asignado",
-        asignadoA: "Ana López",
-        observaciones: ""
+let equipos = [];
+let colaboradores = [];
+let movimientos = [];
+let asignaciones = [];
+
+// --- NUEVO: Cargar datos reales de la Nube ---
+async function loadDataFromSupabase() {
+    try {
+        const [resEq, resCol, resAsig, resMov] = await Promise.all([
+            supabase.from('equipos').select('*').order('created_at', { ascending: false }),
+            supabase.from('colaboradores').select('*').order('created_at', { ascending: false }),
+            supabase.from('asignaciones').select('*').order('fecha_asignacion', { ascending: false }),
+            supabase.from('movimientos').select('*').order('created_at', { ascending: false })
+        ]);
+
+        if (resEq.data) equipos = resEq.data;
+        if (resCol.data) colaboradores = resCol.data;
+        if (resAsig.data) asignaciones = resAsig.data;
+        if (resMov.data) movimientos = resMov.data;
+
+        renderAll();
+    } catch (err) {
+        console.error("Error cargando base de datos:", err);
+        alert("Hubo un problema sincronizando la base de datos.");
     }
-];
-let colaboradores = [
-    {
-        id: 1,
-        nombre: "Laura Gómez",
-        correo: "laura.gomez@dataico.com",
-        area: "Tecnología",
-        cargo: "Analista TI",
-        estado: "Activo",
-        observaciones: "Portátil principal del área administrativa"
-    },
-    {
-        id: 2,
-        nombre: "Juan Pérez",
-        correo: "juan.perez@dataico.com",
-        area: "Operaciones",
-        cargo: "Coordinador",
-        estado: "Activo",
-        observaciones: "Usuario frecuente de periféricos"
-    }
-];
-
-
-
-const movimientos = [
-    { fecha: "2026-04-08", accion: "ASIGNACION", equipo: "MAC-PRO" },
-    { fecha: "2026-04-07", accion: "CREACION", equipo: "LAPTOP-DA-RE-12" }
-];
-
-const asignaciones = [
-    { colaborador: "Ana López", equipo: "MAC-PRO", perifericos: "Monitor, Bolso" }
-];
+}
 
 const menuItems = document.querySelectorAll(".menu-item");
 const views = document.querySelectorAll(".view");
@@ -111,7 +84,7 @@ numeroRentado.addEventListener("input", actualizarCodigo);
 nombreBase.addEventListener("input", actualizarCodigo);
 
 const equipoForm = document.getElementById("equipoForm");
-equipoForm.addEventListener("submit", (e) => {
+equipoForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const codigo = codigoGenerado.value.trim();
@@ -128,72 +101,117 @@ equipoForm.addEventListener("submit", (e) => {
 
     const existe = equipos.some(eq => eq.codigo === codigo);
     if (existe) {
-        alert("Ese código ya existe.");
+        alert("Ese código de equipo ya existe en el inventario global.");
         return;
     }
 
-    equipos.unshift({
-        codigo,
-        origen: origen.value,
-        marca,
-        modelo,
-        serial,
-        estado,
-        observaciones
-    });
+    // Guardar en Supabase
+    const { error: insertError } = await supabase.from('equipos').insert([{
+        codigo, origen: origen.value, marca, modelo, serial, estado, observaciones, asignado_a: null
+    }]);
 
-    movimientos.unshift({
-        fecha: new Date().toISOString().slice(0, 10),
-        accion: "CREACION",
-        equipo: codigo
-    });
+    if (insertError) {
+        alert("Error guardando el equipo en la base de datos.");
+        console.error(insertError);
+        return;
+    }
+
+    // Registrar el Movimiento
+    await supabase.from('movimientos').insert([{
+        accion: "CREACION", equipo: codigo
+    }]);
 
     equipoForm.reset();
     codigoGenerado.value = "";
     actualizarCodigo();
     const equipoModal = document.getElementById("equipoModal");
     if (equipoModal) equipoModal.classList.add("hidden");
-    renderAll();
+    
+    await loadDataFromSupabase(); // Refrescar todo
 });
 
 const asignacionForm = document.getElementById("asignacionForm");
-asignacionForm.addEventListener("submit", (e) => {
+asignacionForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const colaborador = document.getElementById("colaborador").value.trim();
     const equipoCodigo = document.getElementById("equipoAsignar").value;
     const checks = [...document.querySelectorAll('.checks input[type="checkbox"]:checked')];
     const perifericos = checks.map(c => c.value).join(", ");
-    const observacion = document.getElementById("observacionAsignacion").value.trim();
 
     if (!colaborador || !equipoCodigo) {
         alert("Debes seleccionar colaborador y equipo.");
         return;
     }
 
-    asignaciones.unshift({
-        colaborador,
-        equipo: equipoCodigo,
-        perifericos
-    });
+    // 1. Guardar la Asignacion
+    const { error: asigError } = await supabase.from('asignaciones').insert([{
+        colaborador, equipo: equipoCodigo, perifericos
+    }]);
 
-    const equipo = equipos.find(eq => eq.codigo === equipoCodigo);
-    if (equipo) {
-        equipo.estado = "Asignado";
-        equipo.asignadoA = colaborador;
+    if (asigError) {
+        alert("Error creando la asignación.");
+        console.error(asigError);
+        return;
     }
 
-    movimientos.unshift({
-        fecha: new Date().toISOString().slice(0, 10),
-        accion: "ASIGNACION",
-        equipo: equipoCodigo
-    });
+    // 2. Actualizar el estado del equipo
+    const { error: eqError } = await supabase.from('equipos')
+        .update({ estado: "Asignado", asignado_a: colaborador })
+        .eq('codigo', equipoCodigo);
+        
+    if (eqError) console.error("Error actualizando estado del equipo:", eqError);
+
+    // 3. Registrar Movimiento
+    await supabase.from('movimientos').insert([{
+        accion: "ASIGNACION", equipo: equipoCodigo
+    }]);
 
     asignacionForm.reset();
     const asignacionModal = document.getElementById("asignacionModal");
     if (asignacionModal) asignacionModal.classList.add("hidden");
-    renderAll();
+    
+    await loadDataFromSupabase(); // Refrescar todo
 });
+
+
+const colaboradorForm = document.getElementById("colaboradorForm");
+if (colaboradorForm) {
+    colaboradorForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const nombre = document.getElementById("colNome").value.trim();
+        const correo = document.getElementById("colCorreo").value.trim();
+        const area = document.getElementById("colArea").value.trim();
+        const cargo = document.getElementById("colCargo").value.trim();
+        const estado = document.getElementById("colEstado").value;
+        const observaciones = document.getElementById("colObservaciones").value.trim();
+
+        const existe = colaboradores.some(c => c.nombre.toLowerCase() === nombre.toLowerCase());
+        if (existe) {
+            alert("Ya existe un colaborador con este nombre.");
+            return;
+        }
+
+        const { error } = await supabase.from('colaboradores').insert([{
+            nombre, correo, area, cargo, estado, observaciones
+        }]);
+
+        if (error) {
+            alert("Error guardando al colaborador.");
+            console.error(error);
+            return;
+        }
+
+        colaboradorForm.reset();
+        const colaboradorModal = document.getElementById("colaboradorModal");
+        if (colaboradorModal) {
+            colaboradorModal.classList.add("hidden");
+        }
+        await loadDataFromSupabase();
+    });
+}
+
 
 function renderEquiposTable() {
     const tbody = document.getElementById("equiposTable");
@@ -217,15 +235,13 @@ function renderEquiposTable() {
       <td>${eq.marca}</td>
       <td>${eq.modelo}</td>
       <td>${eq.estado}</td>
-      <td>${eq.asignadoA || "-"}</td>
+      <td>${eq.asignado_a || "-"}</td>
     </tr>
   `).join("");
 }
 
 const busquedaEquipoInput = document.getElementById("busquedaEquipoInput");
-if (busquedaEquipoInput) {
-    busquedaEquipoInput.addEventListener("input", renderEquiposTable);
-}
+if (busquedaEquipoInput) busquedaEquipoInput.addEventListener("input", renderEquiposTable);
 
 function renderEquiposRecent() {
     const tbody = document.getElementById("equiposRecentTable");
@@ -235,7 +251,7 @@ function renderEquiposRecent() {
       <td>${eq.marca}</td>
       <td>${eq.modelo}</td>
       <td>${eq.estado}</td>
-      <td>${eq.asignadoA || "-"}</td>
+      <td>${eq.asignado_a || "-"}</td>
     </tr>
   `).join("");
 }
@@ -244,7 +260,7 @@ function renderMovimientos() {
     const tbody = document.getElementById("movimientosTable");
     tbody.innerHTML = movimientos.slice(0, 5).map(m => `
     <tr>
-      <td>${m.fecha}</td>
+      <td>${m.fecha || m.created_at.split('T')[0]}</td>
       <td>${m.accion}</td>
       <td>${m.equipo}</td>
     </tr>
@@ -276,9 +292,7 @@ function renderAsignaciones() {
 }
 
 const busquedaAsignacionInput = document.getElementById("busquedaAsignacionInput");
-if (busquedaAsignacionInput) {
-    busquedaAsignacionInput.addEventListener("input", renderAsignaciones);
-}
+if (busquedaAsignacionInput) busquedaAsignacionInput.addEventListener("input", renderAsignaciones);
 
 function renderEquipoSelect() {
     const select = document.getElementById("equipoAsignar");
@@ -304,9 +318,7 @@ function renderStats() {
 
 function renderColaboradoresDatalist() {
     const datalist = document.getElementById("datalistColaboradores");
-    if (datalist) {
-        datalist.innerHTML = colaboradores.map(c => `<option value="${c.nombre}"></option>`).join("");
-    }
+    if (datalist) datalist.innerHTML = colaboradores.map(c => `<option value="${c.nombre}"></option>`).join("");
 }
 
 function renderEquiposDatalists() {
@@ -342,11 +354,8 @@ function renderColaboradores() {
     if (!tbody || !input) return;
 
     const term = input.value.toLowerCase().trim();
-    
     let docs = colaboradores;
-    if (term) {
-        docs = colaboradores.filter(col => col.nombre.toLowerCase().includes(term));
-    }
+    if (term) docs = colaboradores.filter(col => col.nombre.toLowerCase().includes(term));
     
     tbody.innerHTML = docs.map(col => `
     <tr class="clickable-row" style="cursor: pointer;" onclick="mostrarDetalleColaborador('${col.nombre.replace(/'/g, "\\'")}')">
@@ -359,65 +368,7 @@ function renderColaboradores() {
 }
 
 const busquedaInput = document.getElementById("busquedaColaboradorInput");
-if (busquedaInput) {
-    busquedaInput.addEventListener("input", renderColaboradores);
-}
-
-const colaboradorModal = document.getElementById("colaboradorModal");
-const btnOpenColaboradorModal = document.getElementById("btnOpenColaboradorModal");
-const btnCloseColaboradorModal = document.getElementById("btnCloseColaboradorModal");
-
-if (btnOpenColaboradorModal && colaboradorModal) {
-    btnOpenColaboradorModal.addEventListener("click", () => {
-        colaboradorModal.classList.remove("hidden");
-    });
-}
-
-if (btnCloseColaboradorModal && colaboradorModal) {
-    btnCloseColaboradorModal.addEventListener("click", () => {
-        colaboradorModal.classList.add("hidden");
-    });
-}
-
-if (colaboradorModal) {
-    colaboradorModal.addEventListener("click", (e) => {
-        if (e.target === colaboradorModal) {
-            colaboradorModal.classList.add("hidden");
-        }
-    });
-}
-
-const colaboradorForm = document.getElementById("colaboradorForm");
-if (colaboradorForm) {
-    colaboradorForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const nombre = document.getElementById("colNome").value.trim();
-        const correo = document.getElementById("colCorreo").value.trim();
-        const area = document.getElementById("colArea").value.trim();
-        const cargo = document.getElementById("colCargo").value.trim();
-        const estado = document.getElementById("colEstado").value;
-        const observaciones = document.getElementById("colObservaciones").value.trim();
-
-        const maxId = colaboradores.length > 0 ? Math.max(...colaboradores.map(c => c.id)) : 0;
-
-        colaboradores.unshift({
-            id: maxId + 1,
-            nombre,
-            correo,
-            area,
-            cargo,
-            estado,
-            observaciones
-        });
-
-        colaboradorForm.reset();
-        if (colaboradorModal) {
-            colaboradorModal.classList.add("hidden");
-        }
-        renderColaboradores();
-    });
-}
+if (busquedaInput) busquedaInput.addEventListener("input", renderColaboradores);
 
 function mostrarDetalleColaborador(nombre) {
     const col = colaboradores.find(c => c.nombre === nombre);
@@ -433,7 +384,7 @@ function mostrarDetalleColaborador(nombre) {
     const container = document.getElementById("detalleColaboradorEquipos");
 
     if (listas.length === 0) {
-        container.innerHTML = "<p style='color: #6b7280; font-size: 14px;'>No tiene equipos ni periféricos asignados al momento.</p>";
+        container.innerHTML = "<p style='color: #6b7280; font-size: 14px;'>No tiene equipos asignados actualmente.</p>";
     } else {
         container.innerHTML = listas.map(asig => {
             const eq = equipos.find(e => e.codigo === asig.equipo);
@@ -443,7 +394,7 @@ function mostrarDetalleColaborador(nombre) {
             
             return `
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                <p style="margin: 0 0 5px;"><strong>Equipo (Código):</strong> ${asig.equipo}</p>
+                <p style="margin: 0 0 5px;"><strong>Equipo:</strong> ${asig.equipo}</p>
                 <p style="margin: 0 0 5px; font-size: 13px; color: #4b5563;">${equipoData}</p>
                 <p style="margin: 0; font-size: 13px; color: #4b5563;"><strong>Periféricos:</strong> ${asig.perifericos || "Ninguno"}</p>
             </div>
@@ -457,6 +408,7 @@ function mostrarDetalleColaborador(nombre) {
 const modals = [
     { modalId: "equipoModal", openId: "btnOpenEquipoModal", closeId: "btnCloseEquipoModal" },
     { modalId: "asignacionModal", openId: "btnOpenAsignacionModal", closeId: "btnCloseAsignacionModal" },
+    { modalId: "colaboradorModal", openId: "btnOpenColaboradorModal", closeId: "btnCloseColaboradorModal" },
     { modalId: "detalleColaboradorModal", openId: null, closeId: "btnCloseDetalleColaboradorModal" }
 ];
 
@@ -465,17 +417,23 @@ modals.forEach(({ modalId, openId, closeId }) => {
     const openBtn = document.getElementById(openId);
     const closeBtn = document.getElementById(closeId);
     
-    if (modal && openBtn) {
-        openBtn.addEventListener("click", () => modal.classList.remove("hidden"));
-    }
-    if (modal && closeBtn) {
-        closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    }
-    if (modal) {
-        modal.addEventListener("click", (e) => {
-            if (e.target === modal) modal.classList.add("hidden");
-        });
-    }
+    if (modal && openBtn) openBtn.addEventListener("click", () => modal.classList.remove("hidden"));
+    if (modal && closeBtn) closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
+    if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
 });
 
-renderAll();
+// Iniciador de la App
+const __originalRender = renderAll;
+renderAll = function() {
+   // Intercetamos el llamado original del final del script 
+   // Porque ahora requerimos esperar a base de datos.
+};
+
+// Cargar la data al iniciar si hay sesion
+document.addEventListener('DOMContentLoaded', () => {
+    // Restauramos
+    renderAll = __originalRender;
+    // La pagina carga protegida via supabase-client.js
+    // Si tenemos sesion y pasamos MFA, arrancamos el fetch:
+    loadDataFromSupabase();
+});

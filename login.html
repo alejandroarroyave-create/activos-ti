@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Activos TI</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; background-color: #f3f4f6; margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .login-card {
+            width: 100%; max-width: 400px; padding: 32px;
+            background: #ffffff; border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .btn-loading { opacity: 0.7; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="text-center" style="margin-bottom: 24px;">
+            <div class="brand-logo" style="margin: 0 auto 16px; width: 64px; height: 64px; padding: 16px; border-radius: 16px; background-color: #000; color: #fff; font-size: 32px; font-weight: bold; display: flex; justify-content: center; align-items: center;">D</div>
+            <h2 style="margin: 0; color: #1f2937;">Iniciar Sesión</h2>
+            <p style="margin: 8px 0 0; color: #6b7280; font-size: 14px;">Ingresa a Activos TI Dataico</p>
+        </div>
+
+        <form id="loginForm" class="form">
+            <label>Correo Electrónico</label>
+            <input type="email" id="email" required placeholder="tu@empresa.com" autocomplete="username">
+            
+            <label>Contraseña</label>
+            <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
+
+            <!-- Checkbox para auto-registro opcional si falla -->
+            <label style="display:flex; align-items:center; gap: 8px; font-size:13px; font-weight:normal; margin-top:8px;">
+                <input type="checkbox" id="autoRegister" checked style="width:auto; margin:0;">
+                Regístrame si es mi primera vez
+            </label>
+
+            <button type="submit" class="btn-primary" style="margin-top: 24px; width: 100%;" id="loginBtn">Ingresar</button>
+            <p id="errorMsg" style="color: #ef4444; font-size: 14px; margin-top: 16px; text-align: center;" class="hidden"></p>
+        </form>
+
+        <div id="setupMfaSection" class="hidden text-center">
+            <h3 style="margin-top:0;">Configurar Autenticador</h3>
+            <p style="font-size: 14px; color: #4b5563; margin-bottom: 16px;">Escanea este código QR con Google Authenticator o Authy.</p>
+            <canvas id="qrImage" style="margin: 0 auto 16px; display: block; border: 1px solid #e5e7eb; border-radius: 8px;"></canvas>
+            <form id="setupMfaForm" class="form">
+                <input type="text" id="setupMfaCode" required placeholder="Código de 6 dígitos" maxlength="6" style="text-align: center; letter-spacing: 4px; font-size: 20px;">
+                <button type="submit" class="btn-primary" style="margin-top: 16px; width: 100%;" id="setupBtn">Activar 2FA</button>
+            </form>
+            <p id="mfaSetupError" style="color: #ef4444; font-size: 14px; margin-top: 16px;" class="hidden"></p>
+        </div>
+
+        <div id="mfaSection" class="hidden text-center">
+            <h3 style="margin-top:0;">Verificación de Seguridad</h3>
+            <p style="font-size: 14px; color: #4b5563; margin-bottom: 16px;">Ingresa el código de 6 dígitos de tu aplicación autenticadora.</p>
+            <form id="mfaForm" class="form">
+                <input type="text" id="mfaCode" required placeholder="123456" maxlength="6" style="text-align: center; letter-spacing: 4px; font-size: 20px;">
+                <button type="submit" class="btn-primary" style="margin-top: 16px; width: 100%;" id="verifyBtn">Verificar</button>
+            </form>
+            <p id="mfaError" style="color: #ef4444; font-size: 14px; margin-top: 16px;" class="hidden"></p>
+        </div>
+    </div>
+
+    <!-- The Supabase JS lib -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

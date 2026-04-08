@@ -33,7 +33,10 @@
                     <h2 id="viewTitle">Dashboard</h2>
                     <p id="viewSubtitle">Control de equipos, colaboradores y asignaciones</p>
                 </div>
-                <div class="user-box">Usuario Dataico</div>
+                <div class="user-box" style="display: flex; gap: 8px; align-items: center;">
+                    <span id="userEmailDisplay" style="font-weight: 500;">Cargando...</span>
+                    <button class="btn-primary" style="padding: 4px 10px; font-size: 13px; background: #ef4444; border-color: #ef4444;" onclick="logout()">Salir</button>
+                </div>
             </header>
 
             <section id="dashboardView" class="view active">
@@ -321,6 +324,9 @@
     <datalist id="datalistMarcas"></datalist>
     <datalist id="datalistModelos"></datalist>
 
+    <!-- Supabase integration -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
