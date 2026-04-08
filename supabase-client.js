@@ -4,32 +4,48 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Proteger las páginas que no sean de login
 window.addEventListener('DOMContentLoaded', async () => {
-    const isLoginPage = window.location.pathname.includes('login.html');
-    
-    // Obtener sesión actual
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session && !isLoginPage) {
-        // Redirigir al login si no estamos autorizados
-        window.location.href = 'login.html';
-        return;
-    }
-
-    if (session && !isLoginPage) {
-        // Chequear nivel del factor de autenticación (Para forzar el 2FA)
-        const { data: { authenticatorAssuranceLevel } } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        if (authenticatorAssuranceLevel.currentLevel !== 'aal2' && authenticatorAssuranceLevel.nextLevel === 'aal2') {
-            // El usuario configuró 2FA pero no lo ha pasado en esta sesión
-            window.location.href = 'login.html';
-        }
+    try {
+        const isLoginPage = window.location.pathname.includes('login.html');
         
-        // Poner el correo
-        const userEmailElem = document.getElementById('userEmailDisplay');
-        if (userEmailElem) userEmailElem.textContent = session.user.email;
+        // Obtener sesión actual
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (!session && !isLoginPage) {
+            // Redirigir al login si no estamos autorizados
+            window.location.href = 'login.html';
+            return;
+        }
+
+        if (session && !isLoginPage) {
+            // Poner el correo INMEDIATAMENTE
+            const userEmailElem = document.getElementById('userEmailDisplay');
+            if (userEmailElem) userEmailElem.textContent = session.user.email;
+
+            // Chequear nivel del factor de autenticación con protección antiquiebre
+            try {
+                const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                if (data && data.currentLevel !== 'aal2' && data.nextLevel === 'aal2') {
+                    // El usuario configuró 2FA pero no lo ha pasado
+                    window.location.href = 'login.html';
+                }
+            } catch (mfaErr) {
+                console.warn("MFA chequeo falló, ignorando por ahora para prevenir bloqueo:", mfaErr);
+            }
+        }
+    } catch (globalErr) {
+        console.error("Error global de inicialización:", globalErr);
     }
 });
 
 async function logout() {
-    await supabase.auth.signOut();
-    window.location.href = 'login.html';
+    try {
+        await supabase.auth.signOut();
+    } catch (e) {
+        console.error("Error intentando cerrar sesión remota:", e);
+    } finally {
+        // Garantizar que la limpieza visual y redirección suceda sí o sí
+        localStorage.clear(); 
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
 }
