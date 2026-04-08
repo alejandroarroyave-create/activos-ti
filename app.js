@@ -1,4 +1,4 @@
-const supabase = window.supabaseClient || window.supabase;
+const supabase = window.supabaseClient;
 let equipos = [];
 let colaboradores = [];
 let movimientos = [];

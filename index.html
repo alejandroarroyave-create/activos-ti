@@ -327,13 +327,12 @@
     <!-- Supabase integration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Puente de seguridad global
-        const SUPABASE_URL = 'https://hsczygcbmtyzkzeksajm.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzY3p5Z2NibXR5emt6ZWtzYWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzk0NDksImV4cCI6MjA5MTI1NTQ0OX0.YetS-bD8wd_ZsLjeEhO_9ZsrlnxHd-MVPcC0iQS5EF0';
-        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        window.supabase = window.supabaseClient; // Alias para compatibilidad
+        // Puente de seguridad global (Nombre único para evitar colisiones)
+        const URL_DB = 'https://hsczygcbmtyzkzeksajm.supabase.co';
+        const KEY_DB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzY3p5Z2NibXR5emt6ZWtzYWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzk0NDksImV4cCI6MjA5MTI1NTQ0OX0.YetS-bD8wd_ZsLjeEhO_9ZsrlnxHd-MVPcC0iQS5EF0';
+        window.supabaseClient = window.supabase.createClient(URL_DB, KEY_DB);
     </script>
-    <script src="supabase-client.js?v=3"></script>
-    <script src="app.js?v=3"></script>
+    <script src="supabase-client.js?v=4"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>
