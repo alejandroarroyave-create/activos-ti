@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activos TI - Dashboard Dataico</title>
+    <title>Activos TI - Dashboard Avanzado Dataico</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .conditional-input { margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; }
+    </style>
 </head>
 <body>
     <div class="app">
         <aside class="sidebar">
-            <div class="brand"><div class="brand-logo">D</div><div><h1>Activos TI</h1><p>Dashboard Administrativo</p></div></div>
+            <div class="brand"><div class="brand-logo">D</div><div><h1>Activos TI</h1><p>Control Total</p></div></div>
             <nav class="menu">
                 <button class="menu-item active" data-view="dashboard">Dashboard</button>
                 <button class="menu-item" data-view="equipos">Equipos</button>
@@ -19,10 +22,10 @@
         </aside>
         <main class="content">
             <header class="topbar">
-                <div><h2 id="viewTitle">Dashboard</h2><p id="viewSubtitle">Control de inventario y personal</p></div>
+                <div><h2 id="viewTitle">Dashboard</h2><p id="viewSubtitle">Trazabilidad de activos y periféricos</p></div>
                 <div class="user-box">
-                    <span id="userEmailDisplay" style="margin-right: 12px; font-weight: bold;">Cargando...</span>
-                    <button class="btn-primary" style="background:#d94835; margin:0;" onclick="window.logout()">Salir</button>
+                    <span id="userEmailDisplay" style="margin-right: 12px; font-weight: bold;">Certificando Sesión...</span>
+                    <button class="btn-primary" style="background:#d94835; margin:0; padding:6px 12px;" onclick="window.logout()">Salir</button>
                 </div>
             </header>
 
@@ -33,69 +36,87 @@
                     <div class="card stat"><span>Asignados</span><strong id="asignadosCount">0</strong></div>
                 </div>
                 <div class="grid two">
-                    <div class="card"><div class="card-header"><h3>Equipos Recientes</h3></div><table><thead><tr><th>Código</th><th>Marca</th><th>Modelo</th><th>Estado</th></tr></thead><tbody id="recentEquipos"></tbody></table></div>
+                    <div class="card"><div class="card-header"><h3>Equipos Recientes</h3></div><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th><th>Estado</th></tr></thead><tbody id="recentEquipos"></tbody></table></div>
                     <div class="card"><div class="card-header"><h3>Últimos Movimientos</h3></div><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th></tr></thead><tbody id="movimientosList"></tbody></table></div>
                 </div>
             </section>
 
             <section id="equiposView" class="view">
-                <div class="topbar"><h3>Inventario de Equipos</h3><button class="btn-primary" onclick="window.openModal('equipoModal')">+ Nuevo Equipo</button></div>
-                <div class="card"><table><thead><tr><th>Código</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Estado</th><th>Asignado a</th></tr></thead><tbody id="equiposList"></tbody></table></div>
+                <div class="topbar"><h3>Inventario de Equipos y Accesorios</h3><button class="btn-primary" onclick="window.openModal('equipoModal')">+ Nuevo Equipo</button></div>
+                <div class="card"><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Estado</th><th>Asignado a</th></tr></thead><tbody id="equiposList"></tbody></table></div>
             </section>
 
             <section id="asignacionesView" class="view">
-                <div class="topbar"><h3>Control de Asignaciones</h3><button class="btn-primary" onclick="window.openModal('asignacionModal')">+ Nueva Asignación</button></div>
-                <div class="card"><table><thead><tr><th>Colaborador</th><th>Equipo</th><th>Fecha</th><th>Periféricos</th></tr></thead><tbody id="asignacionesList"></tbody></table></div>
+                <div class="topbar"><h3>Seguimiento de Entregas</h3><button class="btn-primary" onclick="window.openModal('asignacionModal')">+ Nueva Asignación</button></div>
+                <div class="card"><table><thead><tr><th>Colaborador</th><th>Equipo</th><th>Fecha</th><th>Periféricos & IDs</th></tr></thead><tbody id="asignacionesList"></tbody></table></div>
             </section>
 
             <section id="colaboradoresView" class="view">
-                <div class="topbar"><h3>Directorio de Personal</h3><button class="btn-primary" onclick="window.openModal('colaboradorModal')">+ Nuevo Colaborador</button></div>
+                <div class="topbar"><h3>Directorio</h3><button class="btn-primary" onclick="window.openModal('colaboradorModal')">+ Nuevo Colaborador</button></div>
                 <div class="card"><table><thead><tr><th>Nombre</th><th>Cargo</th><th>Área</th><th>Correo</th></tr></thead><tbody id="colaboradoresList"></tbody></table></div>
             </section>
         </main>
     </div>
 
-    <!-- MODAL EQUIPO (CORREGIDO) -->
+    <!-- MODAL EQUIPO (CATEGORIZADO) -->
     <div id="equipoModal" class="modal hidden">
         <div class="modal-content">
-            <h3>Nuevo Equipo</h3>
+            <h3>Registrar Equipo</h3>
             <form id="equipoForm" class="form">
-                <label>Origen del Equipo</label>
-                <select id="origen" required>
-                    <option value="Corporativo">Empresa (Dataico)</option>
-                    <option value="Rentado">Rentado (Externo)</option>
+                <label>Tipo de Equipo</label>
+                <select id="tipo" required>
+                    <option value="Laptop">Laptop / Portátil</option>
+                    <option value="Celular">Celular / Smartphone</option>
+                    <option value="Diadema">Diadema / Audífonos</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="Otro">Otro</option>
                 </select>
-                
-                <div id="rentadoFields" class="hidden">
-                    <label>Número de Consecutivo</label>
-                    <input type="text" id="numeroRentado" placeholder="Ej: 123">
-                </div>
-                
-                <div id="corporativoFields">
-                    <label>Nombre Identificador</label>
-                    <input type="text" id="nombreBase" placeholder="Ej: LAPTOP-ALEJO">
-                </div>
-
-                <label>Código Final Generado</label>
-                <input type="text" id="codigoGenerado" readonly style="background: #f3f4f6; font-weight: bold;">
-
+                <label>Origen</label><select id="origen" required><option value="Corporativo">Empresa (Dataico)</option><option value="Rentado">Rentado (Externo)</option></select>
+                <div id="rentadoFields" class="hidden"><label>Consecutivo</label><input type="text" id="numeroRentado" placeholder="Ej: 001"></div>
+                <div id="corporativoFields"><label>Identificador</label><input type="text" id="nombreBase" placeholder="Ej: LAPTOP-ADMIN"></div>
+                <label>Código Final</label><input type="text" id="codigoGenerado" readonly style="background:#f3f4f6;">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                     <div><label>Marca</label><input type="text" id="marca" required></div>
                     <div><label>Modelo</label><input type="text" id="modelo" required></div>
                 </div>
-                <label>Serial</label><input type="text" id="serial" required>
-                <label>Estado</label>
-                <select id="estado"><option value="Bueno">Bueno</option><option value="Regular">Regular</option><option value="Malo">Malo</option></select>
-                
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button type="submit" class="btn-primary" style="flex:1;">Guardar</button>
-                    <button type="button" class="btn-primary" style="background:#6b7280; flex:1;" onclick="window.closeModal('equipoModal')">Cancelar</button>
-                </div>
+                <label>Serial / Service Tag</label><input type="text" id="serial" required>
+                <label>Estado</label><select id="estado"><option value="Bueno">Bueno</option><option value="Regular">Regular</option><option value="Malo">Malo</option></select>
+                <div style="display:flex; gap:10px; margin-top:20px;"><button type="submit" class="btn-primary" style="flex:1;">Guardar</button><button type="button" class="btn-primary" style="background:#6b7280; flex:1;" onclick="window.closeModal('equipoModal')">Cerrar</button></div>
             </form>
         </div>
     </div>
 
-    <!-- OTROS MODALES -->
+    <!-- MODAL ASIGNACION (DINÁMICO) -->
+    <div id="asignacionModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Asignación de Activos</h3>
+            <form id="asignacionForm" class="form">
+                <label>Colaborador</label><input type="text" id="colaborador" required placeholder="Nombre completo">
+                <label>Equipo Principal</label><select id="equipoAsignar" required></select>
+                
+                <label style="margin-top:15px; display:block; border-top:1px solid #eee; padding-top:10px;">Periféricos Adicionales</label>
+                <div class="checks" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <label><input type="checkbox" id="chkMonitor" value="Monitor"> 🖥️ Monitor</label>
+                    <label><input type="checkbox" id="chkDiadema" value="Diadema"> 🎧 Diadema</label>
+                    <label><input type="checkbox" id="chkMouse" value="Mouse"> 🖱️ Mouse</label>
+                    <label><input type="checkbox" id="chkTeclado" value="Teclado"> ⌨️ Teclado</label>
+                    <label><input type="checkbox" id="chkBolso" value="Bolso"> 🎒 Bolso</label>
+                    <label><input type="checkbox" id="chkHub" value="HUB"> 🔌 HUB USB</label>
+                </div>
+
+                <div id="monitorInput" class="conditional-input hidden">
+                    <label>ID / Serial Monitor</label><input type="text" id="idMonitor" placeholder="Ej: MON-123">
+                </div>
+                <div id="diademaInput" class="conditional-input hidden">
+                    <label>ID / Serial Diadema</label><input type="text" id="idDiadema" placeholder="Ej: DIA-456">
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:20px;"><button type="submit" class="btn-primary" style="flex:1;">Confirmar Entrega</button><button type="button" class="btn-primary" style="background:#6b7280; flex:1;" onclick="window.closeModal('asignacionModal')">Cancelar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL COLABORADOR -->
     <div id="colaboradorModal" class="modal hidden">
         <div class="modal-content">
             <h3>Nuevo Colaborador</h3>
@@ -103,31 +124,19 @@
                 <input type="text" id="colNombre" placeholder="Nombre completo" required>
                 <input type="text" id="colCargo" placeholder="Cargo" required>
                 <input type="text" id="colArea" placeholder="Área" required>
-                <input type="email" id="colCorreo" placeholder="Correo electrónico" required>
+                <input type="email" id="colCorreo" placeholder="Correo" required>
                 <button type="submit" class="btn-primary">Registrar</button>
                 <button type="button" class="btn-primary" style="background:#6b7280;" onclick="window.closeModal('colaboradorModal')">X</button>
             </form>
         </div>
     </div>
 
-    <div id="asignacionModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Nueva Asignación</h3>
-            <form id="asignacionForm" class="form">
-                <label>Colaborador</label><input type="text" id="colaborador" required>
-                <label>Equipo</label><select id="equipoAsignar" required></select>
-                <div class="checks"><label><input type="checkbox" value="Mouse"> Mouse</label></div>
-                <button type="submit" class="btn-primary">Confirmar</button>
-                <button type="button" class="btn-primary" style="background:#6b7280;" onclick="window.closeModal('asignacionModal')">Cerrar</button>
-            </form>
-        </div>
-    </div>
-
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        (function() {
+        (function(){
             window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
             window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+            
             const menuItems = document.querySelectorAll(".menu-item"), views = document.querySelectorAll(".view");
             menuItems.forEach(btn => {
                 btn.onclick = () => {
@@ -138,6 +147,12 @@
                     document.getElementById("viewTitle").textContent = btn.textContent;
                 };
             });
+
+            // Lógica Visibilidad Condicional (Monitor/Diadema)
+            const chkM = document.getElementById("chkMonitor"), inM = document.getElementById("monitorInput");
+            const chkD = document.getElementById("chkDiadema"), inD = document.getElementById("diademaInput");
+            if(chkM) chkM.onchange = () => chkM.checked ? inM.classList.remove("hidden") : inM.classList.add("hidden");
+            if(chkD) chkD.onchange = () => chkD.checked ? inD.classList.remove("hidden") : inD.classList.add("hidden");
         })();
     </script>
     <script>
@@ -147,86 +162,87 @@
             window.logout = async () => { if(supabase) await supabase.auth.signOut(); localStorage.clear(); location.href = 'login.html'; };
 
             if (localStorage.getItem('test_bypass') === 'true') {
-                document.getElementById('userEmailDisplay').textContent = "admin@prueba.com";
-                loadData();
+                document.getElementById('userEmailDisplay').textContent = "admin@prueba.com"; loadData();
             } else {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) { location.href = 'login.html'; return; }
-                document.getElementById('userEmailDisplay').textContent = session.user.email;
-                loadData();
+                document.getElementById('userEmailDisplay').textContent = session.user.email; loadData();
             }
 
             async function loadData() {
-                const [rE, rC, rA, rM] = await Promise.all([
+                const [rE, rCol, rAsi, rMov] = await Promise.all([
                     supabase.from('equipos').select('*').order('created_at', {ascending:false}),
                     supabase.from('colaboradores').select('*').order('created_at', {ascending:false}),
                     supabase.from('asignaciones').select('*').order('created_at', {ascending:false}),
                     supabase.from('movimientos').select('*').order('created_at', {ascending:false})
                 ]);
-                const eq = rE.data || [], col = rC.data || [], asi = rA.data || [], mov = rM.data || [];
+                const eq = rE.data || [], col = rCol.data || [], asi = rAsi.data || [], mov = rM.data || [];
                 document.getElementById("totalEquipos").textContent = eq.length;
                 document.getElementById("disponibles").textContent = eq.filter(e => !e.asignado_a).length;
                 document.getElementById("asignadosCount").textContent = eq.filter(e => e.asignado_a).length;
 
-                const renderTable = (id, d, f) => { const el = document.getElementById(id); if(el) el.innerHTML = d.map(f).join(''); };
-                renderTable("recentEquipos", eq.slice(0,5), e => `<tr><td>${e.codigo}</td><td>${e.marca}</td><td>${e.modelo}</td><td>${e.estado}</td></tr>`);
-                renderTable("movimientosList", mov.slice(0,5), m => `<tr><td>${new Date(m.created_at).toLocaleDateString()}</td><td>${m.accion}</td><td>${m.equipo}</td></tr>`);
-                renderTable("equiposList", eq, e => `<tr><td>${e.codigo}</td><td>${e.marca}</td><td>${e.modelo}</td><td>${e.serial}</td><td>${e.estado}</td><td>${e.asignado_a || 'Disponible'}</td></tr>`);
-                renderTable("asignacionesList", asi, a => `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td><td>${a.perifericos}</td></tr>`);
-                renderTable("colaboradoresList", col, c => `<tr><td>${c.nombre}</td><td>${c.cargo}</td><td>${c.area}</td><td>${c.correo}</td></tr>`);
+                const render = (id, d, f) => { const el = document.getElementById(id); if(el) el.innerHTML = d.map(f).join(''); };
+                render("recentEquipos", eq.slice(0,5), e => `<tr><td>${e.codigo}</td><td>${e.tipo}</td><td>${e.marca}</td><td>${e.estado}</td></tr>`);
+                render("movimientosList", mov.slice(0,5), m => `<tr><td>${new Date(m.created_at).toLocaleDateString()}</td><td>${m.accion}</td><td>${m.equipo}</td></tr>`);
+                render("equiposList", eq, e => `<tr><td>${e.codigo}</td><td>${e.tipo || 'Laptop'}</td><td>${e.marca}</td><td>${e.modelo}</td><td>${e.serial}</td><td>${e.estado}</td><td>${e.asignado_a || 'Disponible'}</td></tr>`);
+                render("asignacionesList", asi, a => {
+                    let perifs = [];
+                    if(a.mouse) perifs.push("🖱️"); if(a.teclado) perifs.push("⌨️");
+                    if(a.monitor_id) perifs.push(`🖥️ (ID:${a.monitor_id})`);
+                    if(a.diadema_id) perifs.push(`🎧 (ID:${a.diadema_id})`);
+                    return `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td><td>${perifs.join(" ") || 'Ninguno'}</td></tr>`;
+                });
+                render("colaboradoresList", col, c => `<tr><td>${c.nombre}</td><td>${c.cargo}</td><td>${c.area}</td><td>${c.correo}</td></tr>`);
                 
                 const sel = document.getElementById("equipoAsignar");
                 if(sel) sel.innerHTML = '<option value="">Seleccione equipo...</option>' + eq.filter(e=>!e.asignado_a).map(e=>`<option value="${e.codigo}">${e.codigo}</option>`).join('');
             }
 
-            // Lógica de Códigos Automáticos (REPARADA)
+            // Lógica Form Equipo
             const org = document.getElementById("origen"), gen = document.getElementById("codigoGenerado"), num = document.getElementById("numeroRentado"), nom = document.getElementById("nombreBase");
-            const updateCode = () => {
-                if(org.value === 'Rentado') {
-                    document.getElementById("rentadoFields").classList.remove("hidden");
-                    document.getElementById("corporativoFields").classList.add("hidden");
-                    gen.value = 'LAPTOP-DA-RE-' + (num.value || "").trim();
-                } else {
-                    document.getElementById("corporativoFields").classList.remove("hidden");
-                    document.getElementById("rentadoFields").classList.add("hidden");
-                    gen.value = (nom.value || "").trim().toUpperCase().replace(/\s+/g, '-');
+            const up = () => {
+                if(org.value === 'Rentado') { 
+                    document.getElementById("rentadoFields").classList.remove("hidden"); document.getElementById("corporativoFields").classList.add("hidden"); 
+                    gen.value = 'LAPTOP-DA-RE-' + (num.value || "");
+                } else { 
+                    document.getElementById("corporativoFields").classList.remove("hidden"); document.getElementById("rentadoFields").classList.add("hidden"); 
+                    gen.value = (nom.value || "").toUpperCase().replace(/\s+/g, '-');
                 }
             };
-            
-            org.onchange = updateCode; 
-            num.oninput = updateCode; 
-            nom.oninput = updateCode;
-            updateCode(); // Inicializar
+            org.onchange = up; num.oninput = up; nom.oninput = up;
 
             document.getElementById("equipoForm").onsubmit = async (e) => {
                 e.preventDefault();
-                const d = { 
-                    codigo: gen.value, 
-                    origen: org.value, 
-                    marca: document.getElementById("marca").value, 
-                    modelo: document.getElementById("modelo").value, 
-                    serial: document.getElementById("serial").value, 
-                    estado: document.getElementById("estado").value 
-                };
+                const d = { codigo: gen.value, tipo: document.getElementById("tipo").value, origen: org.value, marca: document.getElementById("marca").value, modelo: document.getElementById("modelo").value, serial: document.getElementById("serial").value, estado: document.getElementById("estado").value };
                 const { error } = await supabase.from('equipos').insert([d]);
-                if(!error) { 
-                    await supabase.from('movimientos').insert([{accion:'CREACION', equipo: d.codigo}]); 
+                if(!error){ await supabase.from('movimientos').insert([{accion:'CREACION', equipo: d.codigo}]); location.reload(); }
+            };
+
+            // Lógica Form Asignación
+            document.getElementById("asignacionForm").onsubmit = async (e) => {
+                e.preventDefault();
+                const eqId = document.getElementById("equipoAsignar").value, col = document.getElementById("colaborador").value;
+                const d = {
+                    colaborador: col, equipo: eqId,
+                    monitor_id: document.getElementById("chkMonitor").checked ? document.getElementById("idMonitor").value : null,
+                    diadema_id: document.getElementById("chkDiadema").checked ? document.getElementById("idDiadema").value : null,
+                    mouse: document.getElementById("chkMouse").checked,
+                    teclado: document.getElementById("chkTeclado").checked,
+                    bolso: document.getElementById("chkBolso").checked,
+                    hub_usb: document.getElementById("chkHub").checked
+                };
+                const { error } = await supabase.from('asignaciones').insert([d]);
+                if(!error){ 
+                    await supabase.from('equipos').update({asignado_a: col}).eq('codigo', eqId);
+                    await supabase.from('movimientos').insert([{accion:'ASIGNACION', equipo: eqId}]); 
                     location.reload(); 
-                } else alert("Error: " + error.message);
+                }
             };
 
             document.getElementById("colaboradorForm").onsubmit = async (e) => {
                 e.preventDefault();
-                const d = { nombre: document.getElementById("colNombre").value, cargo: document.getElementById("colCargo").value, area: document.getElementById("colArea").value, correo: document.getElementById("colCorreo").value };
-                const { error } = await supabase.from('colaboradores').insert([d]);
-                if(!error) location.reload();
-            };
-
-            document.getElementById("asignacionForm").onsubmit = async (e) => {
-                e.preventDefault();
-                const col = document.getElementById("colaborador").value, eqId = document.getElementById("equipoAsignar").value;
-                const { error } = await supabase.from('asignaciones').insert([{colaborador:col, equipo:eqId, perifericos:'Por defecto'}]);
-                if(!error) { await supabase.from('equipos').update({asignado_a: col}).eq('codigo', eqId); location.reload(); }
+                const d = { nombre:document.getElementById("colNombre").value, cargo:document.getElementById("colCargo").value, area:document.getElementById("colArea").value, correo:document.getElementById("colCorreo").value };
+                await supabase.from('colaboradores').insert([d]); location.reload();
             };
         })();
     </script>
