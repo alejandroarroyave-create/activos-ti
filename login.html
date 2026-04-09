@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Activos TI</title>
+    <title>Acceso Seguro - Activos TI</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
@@ -16,120 +16,152 @@
 <body>
     <div class="login-card">
         <div class="text-center" style="margin-bottom: 24px;">
-            <div class="brand-logo" style="margin: 0 auto 16px; width: 64px; height: 64px; border-radius: 16px; background: #ff6b57; color: #fff; font-size: 32px; font-weight: bold; display: flex; justify-content: center; align-items: center;">D</div>
-            <h2>Iniciar Sesión</h2>
-            <p style="color: #6b7280; font-size: 14px;">Acceso Administrativo - Dataico</p>
+            <div class="brand-logo" style="margin:0 auto 16px; width:64px; height:64px; border-radius:16px; background:#ff6b57; color:#fff; font-size:32px; font-weight:bold; display:flex; justify-content:center; align-items:center;">D</div>
+            <h2 id="loginTitle">Iniciar Sesión</h2>
+            <p id="loginSubtitle" style="color:#6b7280; font-size:14px;">Acceso Privado Dataico</p>
         </div>
 
+        <!-- FORMULARIO 1: LOGIN -->
         <form id="loginForm" class="form">
-            <label>Usuario o Correo</label>
+            <label>Usuario / Correo</label>
             <input type="text" id="email" required placeholder="admin o tu@empresa.com">
             <label>Contraseña</label>
             <input type="password" id="password" required>
-            <label style="display:flex; align-items:center; gap:8px; font-weight:normal; margin:10px 0;">
-                <input type="checkbox" id="autoRegister" checked style="width:auto;"> Crear cuenta si no existe
-            </label>
-            <button type="submit" class="btn-primary" style="width:100%; background:#ff6b57;">Ingresar</button>
+            <button type="submit" class="btn-primary" style="width:100%; background:#ff6b57; margin-top:10px;">Ingresar</button>
         </form>
 
-        <div id="setupMfaSection" class="hidden text-center">
-            <h3>Activar 2FA</h3>
-            <p style="font-size:13px; color:#6b7280;">Escanea el código con Google Authenticator</p>
-            <canvas id="qrImage" style="margin: 0 auto;"></canvas>
-            <form id="setupMfaForm" class="form">
-                <input type="text" id="setupMfaCode" required placeholder="Código 6 dígitos" style="text-align:center;">
-                <button type="submit" class="btn-primary" style="width:100%; background:#ff6b57;">Verificar y Activar</button>
+        <!-- FORMULARIO 2: CAMBIO CLAVE OBLIGATORIO -->
+        <div id="changePassSection" class="hidden">
+            <p style="color:#ef4444; font-weight:bold; margin-bottom:15px;">⚠️ Por seguridad, debes cambiar tu clave temporal.</p>
+            <form id="changePassForm" class="form">
+                <label>Nueva Contraseña</label>
+                <input type="password" id="newPassword" required minlength="6">
+                <label>Confirmar Contraseña</label>
+                <input type="password" id="confirmPassword" required minlength="6">
+                <button type="submit" class="btn-primary" style="width:100%;">Actualizar Contraseña</button>
             </form>
         </div>
 
+        <!-- FORMULARIO 3: ACTIVAR 2FA (QR) -->
+        <div id="setupMfaSection" class="hidden text-center">
+            <h3>Activar Google Authenticator</h3>
+            <p style="font-size:13px; color:#6b7280; margin-bottom:10px;">Escanea este código con tu celular.</p>
+            <canvas id="qrImage" style="margin: 0 auto 15px;"></canvas>
+            <form id="setupMfaForm" class="form">
+                <input type="text" id="setupMfaCode" required placeholder="6 dígitos" style="text-align:center;">
+                <button type="submit" class="btn-primary" style="width:100%;">Activar y Acceder</button>
+            </form>
+        </div>
+
+        <!-- FORMULARIO 4: VERIFICAR 2FA RECURRENTE -->
         <div id="mfaSection" class="hidden text-center">
             <h3>Verificación 2FA</h3>
-            <p style="font-size:13px; color:#6b7280;">Ingresa el código de tu celular</p>
+            <p style="font-size:12px; color:#6b7280;">Ingresa el código de tu Authenticator.</p>
             <form id="mfaForm" class="form">
                 <input type="text" id="mfaCode" required placeholder="000 000" style="text-align:center;">
-                <button type="submit" class="btn-primary" style="width:100%; background:#ff6b57;">Acceder</button>
+                <button type="submit" class="btn-primary" style="width:100%;">Verificar</button>
             </form>
         </div>
     </div>
 
-    <!-- LÓGICA DE BYPASS (INSTANTÁNEA) -->
-    <script>
-        document.getElementById('loginForm').onsubmit = (e) => {
-            const u = document.getElementById('email').value;
-            const p = document.getElementById('password').value;
-            
-            if (u === 'admin' && p === '123') {
-                e.preventDefault();
-                console.log("Acceso admin detectado.");
-                localStorage.setItem('test_bypass', 'true');
-                location.href = 'index.html';
-                return false;
-            }
-            // Si no es admin, permitimos que el siguiente script de Supabase lo maneje (si carga)
-        };
-    </script>
-
-    <!-- LÓGICA DE SUPABASE (CONEXIÓN REAL) -->
+    <!-- SCRIPT DE SEGURIDAD -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
+        (function() {
+            // Bypass rápido para admin
+            const loginForm = document.getElementById('loginForm');
+            const originalSubmit = loginForm.onsubmit;
+            loginForm.onsubmit = (e) => {
+                const u = document.getElementById('email').value, p = document.getElementById('password').value;
+                if (u === 'admin' && p === '123') {
+                    e.preventDefault();
+                    localStorage.setItem('test_bypass', 'true');
+                    location.href = 'index.html';
+                    return false;
+                }
+            };
+        })();
+    </script>
+    <script>
         (async function() {
-            try {
-                const sURL = 'https://hsczygcbmtyzkzeksajm.supabase.co', sKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzY3p5Z2NibXR5emt6ZWtzYWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzk0NDksImV4cCI6MjA5MTI1NTQ0OX0.YetS-bD8wd_ZsLjeEhO_9ZsrlnxHd-MVPcC0iQS5EF0';
-                if(!window.supabase) return;
-                const supabase = window.supabase.createClient(sURL, sKEY);
-                let globalFactorId = null;
+            const sURL = 'https://hsczygcbmtyzkzeksajm.supabase.co', sKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzY3p5Z2NibXR5emt6ZWtzYWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzk0NDksImV4cCI6MjA5MTI1NTQ0OX0.YetS-bD8wd_ZsLjeEhO_9ZsrlnxHd-MVPcC0iQS5EF0';
+            const supabase = window.supabase.createClient(sURL, sKEY);
+            let gFactorId = null;
 
-                const originalForm = document.getElementById('loginForm');
-                const existingSubmit = originalForm.onsubmit;
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                const email = document.getElementById('email').value, password = document.getElementById('password').value;
+                if(email === 'admin') return; e.preventDefault();
+                
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if(error) return alert("Acceso denegado: " + error.message);
+                if(data.session) handleSecurityFlow(data.session);
+            });
 
-                originalForm.onsubmit = async (e) => {
-                    // Primero ejecutamos el bypass
-                    if (existingSubmit(e) === false) return;
-
-                    // Si no fue bypass, seguimos con Supabase
-                    e.preventDefault();
-                    const email = document.getElementById('email').value, password = document.getElementById('password').value;
-                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                    
-                    if (error) {
-                        if(document.getElementById('autoRegister').checked) {
-                            const { data:uD, error:uE } = await supabase.auth.signUp({ email, password });
-                            if(uE) return alert(uE.message);
-                            if(uD.session) return hMFA(uD.session, supabase);
-                        }
-                        return alert(error.message);
-                    }
-                    if (data.session) hMFA(data.session, supabase);
-                };
-
-                async function hMFA(session, sb) {
-                    const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-                    if (data.currentLevel === 'aal1' && data.nextLevel === 'aal2') {
-                        document.getElementById('loginForm').classList.add('hidden');
-                        document.getElementById('mfaSection').classList.remove('hidden');
-                    } else if (data.currentLevel === 'aal1' && data.nextLevel === 'aal1') {
-                        enroll(sb);
-                    } else { location.href = 'index.html'; }
+            async function handleSecurityFlow(session) {
+                // 1. Verificar si debe cambiar clave
+                const { data: profile } = await supabase.from('perfiles').select('debe_cambiar_clave').eq('id', session.user.id).single();
+                if (profile && profile.debe_cambiar_clave) {
+                    showSection('changePassSection');
+                    return;
                 }
+                // 2. Verificar MFA
+                const { data: mfa } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                if (mfa.nextLevel === 'aal2' && mfa.currentLevel === 'aal1') {
+                    showSection('mfaSection');
+                } else if (mfa.nextLevel === 'aal1' && mfa.currentLevel === 'aal1') {
+                    enrollMFA();
+                } else { location.href = 'index.html'; }
+            }
 
-                async function enroll(sb) {
-                    document.getElementById('loginForm').classList.add('hidden');
-                    document.getElementById('setupMfaSection').classList.remove('hidden');
-                    const { data } = await sb.auth.mfa.enroll({ factorType: 'totp' });
-                    globalFactorId = data.id;
-                    QRCode.toCanvas(document.getElementById('qrImage'), data.totp.uri);
-                }
+            function showSection(id) {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('changePassSection').classList.add('hidden');
+                document.getElementById('setupMfaSection').classList.add('hidden');
+                document.getElementById('mfaSection').classList.add('hidden');
+                document.getElementById(id).classList.remove('hidden');
+            }
 
-                // ... resten de listeners para 2FA real ...
-                document.getElementById('setupMfaForm').onsubmit = async (e) => {
-                    e.preventDefault();
-                    const code = document.getElementById('setupMfaCode').value;
-                    const chall = await supabase.auth.mfa.challenge({ factorId: globalFactorId });
-                    const verify = await supabase.auth.mfa.verify({ factorId: globalFactorId, challengeId: chall.data.id, code });
-                    if(!verify.error) location.href = 'index.html';
-                };
+            // Cambiar contraseña
+            document.getElementById('changePassForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const newP = document.getElementById('newPassword').value, confP = document.getElementById('confirmPassword').value;
+                if(newP !== confP) return alert("Las contraseñas no coinciden.");
+                
+                const { error } = await supabase.auth.updateUser({ password: newP });
+                if(error) return alert(error.message);
+                
+                const user = (await supabase.auth.getUser()).data.user;
+                await supabase.from('perfiles').update({ debe_cambiar_clave: false }).eq('id', user.id);
+                location.reload(); // Recargar para ir a MFA
+            };
 
-            } catch(e) { console.error("Error en login real:", e); }
+            // Enrolar MFA (QR)
+            async function enrollMFA() {
+                showSection('setupMfaSection');
+                const { data } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
+                gFactorId = data.id;
+                QRCode.toCanvas(document.getElementById('qrImage'), data.totp.uri);
+            }
+
+            document.getElementById('setupMfaForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const code = document.getElementById('setupMfaCode').value;
+                const chall = await supabase.auth.mfa.challenge({ factorId: gFactorId });
+                const { error } = await supabase.auth.mfa.verify({ factorId: gFactorId, challengeId: chall.data.id, code });
+                if(!error) location.href = 'index.html'; else alert("Código inválido.");
+            };
+
+            // Verificar MFA Recurrente
+            document.getElementById('mfaForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const code = document.getElementById('mfaCode').value;
+                const { data: factors } = await supabase.auth.mfa.listFactors();
+                const factor = factors.all[0];
+                const chall = await supabase.auth.mfa.challenge({ factorId: factor.id });
+                const { error } = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: chall.data.id, code });
+                if(!error) location.href = 'index.html'; else alert("Código incorrecto.");
+            };
+
         })();
     </script>
 </body>
