@@ -323,17 +323,23 @@
             document.getElementById('absoluteConfig').onsubmit = async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('absID').value, sec = document.getElementById('absSecret').value;
-                if(id) await supabase.from('config_seguridad').upsert({ clave:'abs_id', valor:id }, {onConflict:'clave'});
-                if(sec) await supabase.from('config_seguridad').upsert({ clave:'abs_secret', valor:sec }, {onConflict:'clave'});
-                alert("Configuración de Absolute guardada con éxito.");
+                let errs = [];
+                if(id) { const {error} = await supabase.from('config_seguridad').upsert({ clave:'abs_id', valor:id }, {onConflict:'clave'}); if(error) errs.push(error.message); }
+                if(sec) { const {error} = await supabase.from('config_seguridad').upsert({ clave:'abs_secret', valor:sec }, {onConflict:'clave'}); if(error) errs.push(error.message); }
+                
+                if(errs.length > 0) alert("Error al guardar: " + errs.join(", "));
+                else alert("Configuración de Absolute guardada con éxito.");
             };
 
             document.getElementById('driveConfig').onsubmit = async (e) => {
                 e.preventDefault();
                 const fID = document.getElementById('driveFolderID').value, json = document.getElementById('driveJSON').value;
-                if(fID) await supabase.from('config_seguridad').upsert({ clave:'drive_folder', valor:fID }, {onConflict:'clave'});
-                if(json) await supabase.from('config_seguridad').upsert({ clave:'drive_json', valor:json }, {onConflict:'clave'});
-                alert("Configuración de Google Drive vinculada.");
+                let errs = [];
+                if(fID) { const {error} = await supabase.from('config_seguridad').upsert({ clave:'drive_folder', valor:fID }, {onConflict:'clave'}); if(error) errs.push(error.message); }
+                if(json) { const {error} = await supabase.from('config_seguridad').upsert({ clave:'drive_json', valor:json }, {onConflict:'clave'}); if(error) errs.push(error.message); }
+                
+                if(errs.length > 0) alert("Error al guardar: " + errs.join(", "));
+                else alert("Configuración de Google Drive vinculada.");
             };
 
             window.testAbsoluteConnection = async () => {
