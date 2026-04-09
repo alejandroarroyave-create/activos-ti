@@ -8,11 +8,14 @@
     <style>
         body { visibility: hidden; opacity: 0; transition: opacity 0.3s ease; }
         body.authenticated { visibility: visible; opacity: 1; }
-        .conditional-input { margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; }
         .hidden { display: none !important; }
-        /* Control de visibilidad por roles */
         .admin-only { display: none; }
         body.is-admin .admin-only { display: block; }
+        .table-container { overflow-x: auto; max-width: 100%; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        .btn-csv { background: #107c10; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-csv:hover { background: #0b5a0b; }
     </style>
 </head>
 <body>
@@ -24,6 +27,7 @@
                 <button class="menu-item" data-view="equipos">Equipos</button>
                 <button class="menu-item" data-view="asignaciones">Asignaciones</button>
                 <button class="menu-item" data-view="colaboradores">Colaboradores</button>
+                <button class="menu-item" data-view="historial">Historial</button>
                 <button class="menu-item admin-only" data-view="usuarios" id="btnMenuUsuarios">Seguridad / Usuarios</button>
             </nav>
         </aside>
@@ -36,6 +40,7 @@
                 </div>
             </header>
 
+            <!-- VISTA DASHBOARD -->
             <section id="dashboardView" class="view active">
                 <div class="cards">
                     <div class="card stat"><span>Equipos totales</span><strong id="totalEquipos">0</strong></div>
@@ -44,27 +49,56 @@
                 </div>
                 <div class="grid two">
                     <div class="card"><div class="card-header"><h3>Equipos Recientes</h3></div><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th></tr></thead><tbody id="recentEquipos"></tbody></table></div>
-                    <div class="card"><div class="card-header"><h3>Últimos Movimientos</h3></div><table><thead><tr><th>Fecha</th><th>Acción</th><th>Equipo</th></tr></thead><tbody id="movimientosList"></tbody></table></div>
+                    <div class="card"><div class="card-header"><h3>Últimos Movimientos</h3></div><table><thead><tr><th>Fecha</th><th>Acción</th><th>Responsable</th></tr></thead><tbody id="movimientosList"></tbody></table></div>
                 </div>
             </section>
 
-            <!-- GESTIÓN DE EQUIPOS -->
+            <!-- VISTA EQUIPOS -->
             <section id="equiposView" class="view">
                 <div class="topbar"><h3>Inventario de Equipos</h3><button class="btn-primary" onclick="window.openModal('equipoModal')">+ Nuevo Equipo</button></div>
                 <div class="card"><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Asignado</th></tr></thead><tbody id="equiposList"></tbody></table></div>
             </section>
 
+            <!-- VISTA ASIGNACIONES -->
             <section id="asignacionesView" class="view">
                 <div class="topbar"><h3>Control de Asignaciones</h3><button class="btn-primary" onclick="window.openModal('asignacionModal')">+ Nueva Asignación</button></div>
                 <div class="card"><table><thead><tr><th>Colaborador</th><th>Equipo</th><th>Fecha</th><th>Accesorios</th></tr></thead><tbody id="asignacionesList"></tbody></table></div>
             </section>
 
+            <!-- VISTA COLABORADORES -->
             <section id="colaboradoresView" class="view">
                 <div class="topbar"><h3>Directorio de Personal</h3><button class="btn-primary" onclick="window.openModal('colaboradorModal')">+ Nuevo Colaborador</button></div>
                 <div class="card"><table><thead><tr><th>Nombre</th><th>Cargo</th><th>Área</th><th>Correo</th></tr></thead><tbody id="colaboradoresList"></tbody></table></div>
             </section>
 
-            <!-- GESTIÓN DE USUARIOS (MULTINIVEL) -->
+            <!-- VISTA HISTORIAL MAESTRO -->
+            <section id="historialView" class="view">
+                <div class="topbar">
+                    <h3>Registro Histórico Detallado</h3>
+                    <button class="btn-csv" onclick="window.exportToCSV()">📊 Descargar CSV (Excel)</button>
+                </div>
+                <div class="card table-container">
+                    <table style="min-width: 1200px;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Acción</th>
+                                <th>Código</th>
+                                <th>Tipo</th>
+                                <th>Serial</th>
+                                <th>Colaborador</th>
+                                <th>Realizado Por</th>
+                                <th>Detalle</th>
+                                <th>Anterior</th>
+                                <th>Nuevo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historialFullList"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- VISTA USUARIOS -->
             <section id="usuariosView" class="view">
                 <div class="topbar"><h3>Seguridad y Accesos</h3><button class="btn-primary" onclick="window.openModal('usuarioModal')">+ Crear Nuevo Acceso</button></div>
                 <div class="card">
@@ -74,95 +108,106 @@
         </main>
     </div>
 
-    <!-- MODAL EQUIPO -->
+    <!-- MODALES -->
     <div id="equipoModal" class="modal hidden"><div class="modal-content"><h3>Registrar Equipo</h3><form id="equipoForm" class="form"><label>Tipo</label><select id="tipo"><option value="Laptop">Laptop</option><option value="Celular">Celular</option><option value="Diadema">Diadema</option><option value="Monitor">Monitor</option></select><label>Origen</label><select id="origen"><option value="Corporativo">Corporativo</option><option value="Rentado">Rentado</option></select><div id="rentadoFields" class="hidden"><label>Consecutivo</label><input type="text" id="numeroRentado"></div><div id="corporativoFields"><label>Identificador</label><input type="text" id="nombreBase"></div><label>Código Final</label><input type="text" id="codigoGenerado" readonly><input type="text" id="marca" placeholder="Marca" required><input type="text" id="modelo" placeholder="Modelo" required><input type="text" id="serial" placeholder="Serial" required><button type="submit" class="btn-primary">Guardar</button></form></div></div>
     
-    <!-- MODAL ASIGNACION -->
     <div id="asignacionModal" class="modal hidden"><div class="modal-content"><h3>Asignación de Activo</h3><form id="asignacionForm" class="form"><label>Colaborador</label><input type="text" id="colaborador" required><label>Equipo</label><select id="equipoAsignar" required></select><div class="checks" style="display:grid; grid-template-columns:1fr 1fr;"><label><input type="checkbox" id="chkMonitor"> Monitor</label><label><input type="checkbox" id="chkDiadema"> Diadema</label></div><div id="monitorInput" class="hidden"><label>ID Monitor</label><input type="text" id="idMonitor"></div><div id="diademaInput" class="hidden"><label>ID Diadema</label><input type="text" id="idDiadema"></div><button type="submit" class="btn-primary" style="width:100%;">Confirmar Entrega</button></form></div></div>
 
     <div id="colaboradorModal" class="modal hidden"><div class="modal-content"><h3>Nuevo Colaborador</h3><form id="colaboradorForm" class="form"><input type="text" id="colNombre" placeholder="Nombre" required><input type="text" id="colCargo" placeholder="Cargo" required><input type="text" id="colArea" placeholder="Area" required><input type="email" id="colCorreo" placeholder="Correo" required><button type="submit" class="btn-primary">Registrar</button><button type="button" class="btn-primary" style="background:#6b7280; margin-top:5px;" onclick="window.closeModal('colaboradorModal')">Cancelar</button></form></div></div>
 
-    <!-- MODAL CREACIÓN DE USUARIO (CON BOTÓN COPIA Y ROL) -->
     <div id="usuarioModal" class="modal hidden">
         <div class="modal-content">
             <h3>Invitación de Usuario</h3>
             <form id="usuarioForm" class="form">
-                <label>Username</label><input type="text" id="newUsername" placeholder="ej: alejandro_ti">
-                <label>Correo</label><input type="email" id="newUserEmail" required>
-                <label><input type="checkbox" id="chkSuperAdmin"> Otorgar permisos de Super Admin</label>
-                <div id="tempPassBox" style="background:#f3f4f6; padding:15px; border-radius:8px; margin:15px 0; border:1px solid #d1d5db;">
-                    <span style="font-size:12px; color:#6b7280;">Clave Temporal Generada:</span>
-                    <div id="displayTempPass" style="font-size:22px; font-weight:bold; color:#ff6b57; letter-spacing:1px; margin:5px 0;">Dataico-XXXX</div>
-                    <button type="button" class="btn-primary" id="btnCopiarCreds" style="background:#4b5563; padding:5px 10px; font-size:12px;">📋 Copiar Datos para WhatsApp</button>
+                <input type="text" id="newUsername" placeholder="Username (opcional)">
+                <input type="email" id="newUserEmail" placeholder="Correo Electrónico" required>
+                <label><input type="checkbox" id="chkSuperAdmin"> Es Super Admin?</label>
+                <div id="tempPassBox" style="background:#f3f4f6; padding:10px; border-radius:8px; margin:10px 0;">
+                    <span style="font-size:11px;">Clave Temporal:</span>
+                    <div id="displayTempPass" style="font-weight:bold; font-size:18px; color:#ff6b57;">Dataico-XXXX</div>
+                    <button type="button" class="btn-primary" id="btnCopiarCreds" style="padding:4px 8px; font-size:11px; background:#4b5563;">📋 Copiar</button>
                 </div>
-                <button type="submit" class="btn-primary" style="width:100%;">Crear y Registrar</button>
-                <button type="button" class="btn-primary" style="background:#6b7280; margin-top:10px;" onclick="window.closeModal('usuarioModal')">Cerrar</button>
+                <button type="submit" class="btn-primary" style="width:100%;">Crear Acceso</button>
+                <button type="button" class="btn-primary" style="background:#6b7280; margin-top:5px;" onclick="window.closeModal('usuarioModal')">Cerrar</button>
             </form>
         </div>
     </div>
 
+    <!-- SCRIPTS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-        (function(){
-            window.openModal = (id) => {
-                if(id === 'usuarioModal') {
-                    const pass = "Dataico-" + Math.floor(1000 + Math.random() * 9000);
-                    document.getElementById('displayTempPass').textContent = pass;
-                    window.currentTempPass = pass;
-                }
-                document.getElementById(id).classList.remove('hidden');
-            };
-            window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-            const menuItems = document.querySelectorAll(".menu-item"), views = document.querySelectorAll(".view");
-            menuItems.forEach(btn => { btn.onclick = () => { menuItems.forEach(x => x.classList.remove("active")); btn.classList.add("active"); views.forEach(v => v.classList.remove("active")); document.getElementById(btn.dataset.view + "View").classList.add("active"); document.getElementById("viewTitle").textContent = btn.textContent; }; });
-            
-            const chkM = document.getElementById("chkMonitor"), inM = document.getElementById("monitorInput");
-            const chkD = document.getElementById("chkDiadema"), inD = document.getElementById("diademaInput");
-            if(chkM) chkM.onchange = () => chkM.checked ? inM.classList.remove("hidden") : inM.classList.add("hidden");
-            if(chkD) chkD.onchange = () => chkD.checked ? inD.classList.remove("hidden") : inD.classList.add("hidden");
-
-            // Función Copiar al Portapapeles
-            document.getElementById('btnCopiarCreds').onclick = () => {
-                const user = document.getElementById('newUsername').value || document.getElementById('newUserEmail').value;
-                const pass = window.currentTempPass;
-                const text = `🔹 Acceso Activos TI Dataico\n\n👤 Usuario: ${user}\n🔑 Clave Temporal: ${pass}\n\n👉 El sistema te pedirá cambiar tu clave al ingresar por primera vez.`;
-                navigator.clipboard.writeText(text).then(() => alert("¡Copiado! Ya puedes pegarlo en WhatsApp."));
-            };
-        })();
-    </script>
     <script>
         (async function() {
             const sURL = 'https://hsczygcbmtyzkzeksajm.supabase.co', sKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzY3p5Z2NibXR5emt6ZWtzYWptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzk0NDksImV4cCI6MjA5MTI1NTQ0OX0.YetS-bD8wd_ZsLjeEhO_9ZsrlnxHd-MVPcC0iQS5EF0';
             const supabase = window.supabase.createClient(sURL, sKEY);
             window.logout = async () => { await supabase.auth.signOut(); localStorage.clear(); location.href = 'login.html'; };
 
-            // VERIFICACIÓN DE JERARQUÍA Y SEGURIDAD (MFA BLINDADO)
-            const checkPermissions = async () => {
-                if (localStorage.getItem('test_bypass') === 'true') {
-                    document.body.classList.add('is-admin', 'authenticated');
-                    document.getElementById('userEmailDisplay').textContent = "Admin Master";
-                    loadData();
-                } else {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (!session) { location.href = 'login.html'; return; }
-                    
-                    // ESCUDO MFA: Verificamos si ya cumplió con el 2FA
-                    const { data: mfa } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-                    if (mfa.nextLevel === 'aal2' && mfa.currentLevel === 'aal1') {
-                        // El usuario TIENE MFA pero no lo ha verificado. Expulsar al login.
-                        location.href = 'login.html';
-                        return;
-                    }
+            // GLOBALES DE UI
+            window.openModal = (id) => { if(id==='usuarioModal'){const p="Dataico-"+Math.floor(1000+Math.random()*9000); document.getElementById('displayTempPass').textContent=p; window.currentTempPass=p;} document.getElementById(id).classList.remove('hidden'); };
+            window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+            const menuItems = document.querySelectorAll(".menu-item"), views = document.querySelectorAll(".view");
+            menuItems.forEach(btn => { btn.onclick = () => { menuItems.forEach(x => x.classList.remove("active")); btn.classList.add("active"); views.forEach(v => v.classList.remove("active")); document.getElementById(btn.dataset.view + "View").classList.add("active"); document.getElementById("viewTitle").textContent = btn.textContent; }; });
+            
+            const chkM = document.getElementById("chkMonitor"), inM = document.getElementById("monitorInput"), chkD = document.getElementById("chkDiadema"), inD = document.getElementById("diademaInput");
+            if(chkM) chkM.onchange = () => chkM.checked ? inM.classList.remove("hidden") : inM.classList.add("hidden");
+            if(chkD) chkD.onchange = () => chkD.checked ? inD.classList.remove("hidden") : inD.classList.add("hidden");
+            document.getElementById('btnCopiarCreds').onclick = () => { const u = document.getElementById('newUsername').value || document.getElementById('newUserEmail').value; const t = `👤 Usuario: ${u}\n🔑 Clave: ${window.currentTempPass}\n\n👉 Activos TI Dataico`; navigator.clipboard.writeText(t).then(() => alert("Copiado!")); };
 
-                    const { data: prof } = await supabase.from('perfiles').select('es_super_admin').eq('id', session.user.id).single();
-                    if (prof && prof.es_super_admin) document.body.classList.add('is-admin');
-                    
-                    document.body.classList.add('authenticated');
-                    document.getElementById('userEmailDisplay').textContent = session.user.email;
-                    loadData();
+            // MOTOR DE REGISTRO INTELIGENTE (AUDITORÍA)
+            window.logAction = async (accion, ref, detalles, meta = {}) => {
+                const user = (localStorage.getItem('test_bypass') === 'true') ? "Admin Master" : document.getElementById('userEmailDisplay').textContent;
+                let finalTipo = meta.tipo || null, finalSerial = meta.serial || null;
+                
+                // Si solo tenemos el código del equipo, buscamos su info automáticamente
+                if(ref && !finalTipo) {
+                    const { data: e } = await supabase.from('equipos').select('tipo, serial').eq('codigo', ref).single();
+                    if(e) { finalTipo = e.tipo; finalSerial = e.serial; }
+                }
+
+                await supabase.from('movimientos').insert([{
+                    accion, equipo: ref, detalles, realizado_por: user,
+                    tipo: finalTipo, serial: finalSerial, 
+                    colaborador: meta.colaborador || null,
+                    estado_anterior: meta.estado_ant || null,
+                    estado_nuevo: meta.estado_nue || null
+                }]);
+            };
+
+            // EXPORTACIÓN CSV
+            window.exportToCSV = async () => {
+                const { data: logs } = await supabase.from('movimientos').select('*').order('created_at', {ascending:false});
+                if(!logs || logs.length === 0) return alert("No hay datos para exportar.");
+                
+                const headers = ["Fecha", "Accion", "Codigo", "Tipo", "Serial", "Colaborador", "Realizado_por", "Detalle", "Estado_Ant", "Estado_Nue"];
+                const rows = logs.map(l => [
+                    new Date(l.created_at).toLocaleString(), l.accion, l.equipo, l.tipo, l.serial, l.colaborador, l.realizado_por, l.detalles, l.estado_anterior, l.estado_nuevo
+                ]);
+
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM para Excel
+                csvContent += headers.join(";") + "\n";
+                rows.forEach(r => { csvContent += r.map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(";") + "\n"; });
+
+                const link = document.createElement("a");
+                link.setAttribute("href", encodeURI(csvContent));
+                link.setAttribute("download", `Historial_Activos_TI_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            // SEGURIDAD
+            const check = async () => {
+                if(localStorage.getItem('test_bypass')==='true'){ document.body.classList.add('is-admin','authenticated'); document.getElementById('userEmailDisplay').textContent="Admin Master"; loadData(); }
+                else {
+                    const { data:{session} } = await supabase.auth.getSession();
+                    if(!session){ location.href='login.html'; return; }
+                    const { data:m } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                    if(m.nextLevel==='aal2' && m.currentLevel==='aal1'){ location.href='login.html'; return; }
+                    const { data:p } = await supabase.from('perfiles').select('es_super_admin').eq('id', session.user.id).single();
+                    if(p && p.es_super_admin) document.body.classList.add('is-admin');
+                    document.body.classList.add('authenticated'); document.getElementById('userEmailDisplay').textContent=session.user.email; loadData();
                 }
             };
-            checkPermissions();
+            check();
 
             async function loadData() {
                 try {
@@ -174,55 +219,81 @@
                         supabase.from('perfiles').select('*').order('email', {ascending:true})
                     ]);
                     const eq = rE.data || [], col = rC.data || [], asi = rA.data || [], mov = rM.data || [], perf = rP.data || [];
-                    document.getElementById("totalEquipos").textContent = eq.length;
-                    document.getElementById("disponibles").textContent = eq.filter(e => !e.asignado_a).length;
-                    document.getElementById("asignadosCount").textContent = eq.filter(e => e.asignado_a).length;
+                    document.getElementById("totalEquipos").textContent=eq.length; document.getElementById("disponibles").textContent=eq.filter(e=>!e.asignado_a).length; document.getElementById("asignadosCount").textContent=eq.filter(e=>e.asignado_a).length;
                     
                     const render = (id, d, f) => { const el = document.getElementById(id); if(el) el.innerHTML = d.map(f).join(''); };
                     render("recentEquipos", eq.slice(0,5), e => `<tr><td>${e.codigo}</td><td>${e.tipo}</td><td>${e.marca}</td></tr>`);
-                    render("movimientosList", mov.slice(0,5), m => `<tr><td>${new Date(m.created_at).toLocaleDateString()}</td><td>${m.accion}</td><td>${m.equipo}</td></tr>`);
+                    render("movimientosList", mov.slice(0,5), m => `<tr><td>${new Date(m.created_at).toLocaleDateString()}</td><td>${m.accion}</td><td>${m.realizado_por}</td></tr>`);
                     render("equiposList", eq, e => `<tr><td>${e.codigo}</td><td>${e.tipo}</td><td>${e.marca}</td><td>${e.modelo}</td><td>${e.serial}</td><td>${e.asignado_a || '-'}</td></tr>`);
-                    render("asignacionesList", asi, a => `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td><td>${a.monitor_id ? '🖥️':''} ${a.diadema_id ? '🎧':''}</td></tr>`);
+                    render("asignacionesList", asi, a => `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td><td>${a.monitor_id?'🖥️':''} ${a.diadema_id?'🎧':''}</td></tr>`);
                     render("colaboradoresList", col, c => `<tr><td>${c.nombre}</td><td>${c.cargo}</td><td>${c.area}</td><td>${c.correo}</td></tr>`);
                     
+                    // HISTORIAL FULL
+                    render("historialFullList", mov, m => `
+                        <tr>
+                            <td>${new Date(m.created_at).toLocaleString()}</td>
+                            <td style="font-weight:bold; color:#ff6b57;">${m.accion}</td>
+                            <td>${m.equipo || '-'}</td>
+                            <td>${m.tipo || '-'}</td>
+                            <td>${m.serial || '-'}</td>
+                            <td>${m.colaborador || '-'}</td>
+                            <td>${m.realizado_por}</td>
+                            <td title="${m.detalles}">${m.detalles ? m.detalles.substring(0,25)+'...' : '-'}</td>
+                            <td style="color:#d94835;">${m.estado_anterior || '-'}</td>
+                            <td style="color:#107c10; font-weight:bold;">${m.estado_nuevo || '-'}</td>
+                        </tr>
+                    `);
+
                     if(document.body.classList.contains('is-admin')) {
-                        render("usuariosList", perf, p => `
-                            <tr>
-                                <td>@${p.usuario || 'sin_usuario'}</td>
-                                <td>${p.email}</td>
-                                <td>${p.es_super_admin ? '⭐ Super Admin' : '👤 Estándar'}</td>
-                                <td><button class="btn-primary" style="padding:4px 8px; font-size:11px; background:#4b5563;" onclick="window.restablecer('${p.email}')">Restablecer</button></td>
-                            </tr>
-                        `);
+                        render("usuariosList", perf, p => `<tr><td>@${p.usuario || 'sin_usuario'}</td><td>${p.email}</td><td>${p.es_super_admin ? '⭐ SA' : '👤'}</td><td><button class="btn-primary" style="padding:4px;" onclick="window.restablecer('${p.email}')">R</button></td></tr>`);
                     }
                     const sel = document.getElementById("equipoAsignar");
                     if(sel) sel.innerHTML = '<option value="">Sel...</option>' + eq.filter(e=>!e.asignado_a).map(e=>`<option value="${e.codigo}">${e.codigo}</option>`).join('');
                 } catch(e) {}
             }
 
-            window.restablecer = async (email) => {
-                if(confirm(`Se enviará un correo de recuperación a ${email}. ¿Deseas continuar?`)) {
-                    await supabase.auth.resetPasswordForEmail(email);
-                    alert("Correo de restablecimiento enviado correctamente.");
+            // EVENTOS DE FORMULARIO
+            window.restablecer = async (em) => { if(confirm("Reset clave?")){ await supabase.auth.resetPasswordForEmail(em); await window.logAction('RESET_PASS', em, 'Solicitud enviada'); alert("Ok"); } };
+            
+            document.getElementById('usuarioForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const em = document.getElementById('newUserEmail').value, us = document.getElementById('newUsername').value, pa = window.currentTempPass, isSA = document.getElementById('chkSuperAdmin').checked;
+                const { data, error } = await supabase.auth.signUp({ email:em, password:pa });
+                if(!error && data.user) {
+                    await supabase.from('perfiles').insert([{ id:data.user.id, email:em, usuario:us||null, debe_cambiar_clave:true, es_super_admin:isSA }]);
+                    await window.logAction('CREAR_USUARIO', em, `Rol: ${isSA?'SA':'STD'}`);
+                    location.reload();
                 }
             };
 
-            document.getElementById('usuarioForm').onsubmit = async (e) => {
+            document.getElementById("colaboradorForm").onsubmit = async (e) => {
                 e.preventDefault();
-                const email = document.getElementById('newUserEmail').value, username = document.getElementById('newUsername').value, pass = window.currentTempPass, isSA = document.getElementById('chkSuperAdmin').checked;
-                const { data, error } = await supabase.auth.signUp({ email, password: pass });
-                if(error) return alert("Error: " + error.message);
-                if(data.user) {
-                    await supabase.from('perfiles').insert([{ id: data.user.id, email: email, usuario: username || null, debe_cambiar_clave: true, es_super_admin: isSA }]);
-                    alert("¡Acceso creado con éxito!");
+                const d = { nombre:document.getElementById("colNombre").value, cargo:document.getElementById("colCargo").value, area:document.getElementById("colArea").value, correo:document.getElementById("colCorreo").value };
+                const { error } = await supabase.from('colaboradores').insert([d]);
+                if(!error) { await window.logAction('CREAR_COLABORADOR', null, d.nombre, { colaborador: d.nombre }); location.reload(); }
+            };
+
+            document.getElementById("asignacionForm").onsubmit = async (e) => {
+                e.preventDefault();
+                const col = document.getElementById("colaborador").value, eq = document.getElementById("equipoAsignar").value, mID = document.getElementById("idMonitor").value, dID = document.getElementById("idDiadema").value;
+                const { error } = await supabase.from('asignaciones').insert([{ colaborador:col, equipo:eq, monitor_id:mID||null, diadema_id:dID||null }]);
+                if(!error) {
+                    await supabase.from('equipos').update({ asignado_a:col }).eq('codigo', eq);
+                    await window.logAction('ASIGNACION', eq, `Asignado a: ${col}`, { colaborador: col, estado_ant: 'DISPONIBLE', estado_nue: 'ASIGNADO' });
                     location.reload();
                 }
             };
 
             const org = document.getElementById("origen"), gen = document.getElementById("codigoGenerado"), num = document.getElementById("numeroRentado"), nom = document.getElementById("nombreBase");
-            const up = () => { if(org.value === 'Rentado') { document.getElementById("rentadoFields").classList.remove("hidden"); document.getElementById("corporativoFields").classList.add("hidden"); gen.value = 'LAPTOP-DA-RE-' + (num.value || ""); } else { document.getElementById("corporativoFields").classList.remove("hidden"); document.getElementById("rentadoFields").classList.add("hidden"); gen.value = (nom.value || "").toUpperCase().replace(/\s+/g, '-'); } };
+            const up = () => { if(org.value==='Rentado'){ document.getElementById("rentadoFields").classList.remove("hidden"); document.getElementById("corporativoFields").classList.add("hidden"); gen.value='LAPTOP-DA-RE-'+(num.value||""); } else { document.getElementById("corporativoFields").classList.remove("hidden"); document.getElementById("rentadoFields").classList.add("hidden"); gen.value=(nom.value||"").toUpperCase().replace(/\s+/g,'-'); } };
             org.onchange = up; num.oninput = up; nom.oninput = up; up();
-            document.getElementById("equipoForm").onsubmit = async (e) => { e.preventDefault(); const d = { codigo: gen.value, tipo: document.getElementById("tipo").value, origen: org.value, marca: document.getElementById("marca").value, modelo: document.getElementById("modelo").value, serial: document.getElementById("serial").value, estado: "Bueno" }; const { error } = await supabase.from('equipos').insert([d]); if(!error){ await supabase.from('movimientos').insert([{accion:'CREACION', equipo: d.codigo}]); location.reload(); } };
+            
+            document.getElementById("equipoForm").onsubmit = async (e) => {
+                e.preventDefault(); 
+                const d = { codigo:gen.value, tipo:document.getElementById("tipo").value, origen:org.value, marca:document.getElementById("marca").value, modelo:document.getElementById("modelo").value, serial:document.getElementById("serial").value, estado:"Bueno" }; 
+                const { error } = await supabase.from('equipos').insert([d]); 
+                if(!error){ await window.logAction('CREACION_EQUIPO', d.codigo, d.tipo, { tipo: d.tipo, serial: d.serial, estado_ant: 'NUEVO', estado_nue: 'DISPONIBLE' }); location.reload(); } 
+            };
         })();
     </script>
 </body>
