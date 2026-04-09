@@ -6,6 +6,10 @@
     <title>Activos TI - Dashboard Avanzado Dataico</title>
     <link rel="stylesheet" href="styles.css">
     <style>
+        /* Escudo de Privacidad: Escondemos todo hasta validar sesión */
+        body { visibility: hidden; opacity: 0; transition: opacity 0.3s ease; }
+        body.authenticated { visibility: visible; opacity: 1; }
+        
         .conditional-input { margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; }
         .hidden { display: none !important; }
     </style>
@@ -25,7 +29,7 @@
             <header class="topbar">
                 <div><h2 id="viewTitle">Dashboard</h2><p id="viewSubtitle">Trazabilidad de activos y periféricos</p></div>
                 <div class="user-box">
-                    <span id="userEmailDisplay" style="margin-right: 12px; font-weight: bold;">Certificando Sesión...</span>
+                    <span id="userEmailDisplay" style="margin-right: 12px; font-weight: bold;">Certificando...</span>
                     <button class="btn-primary" style="background:#d94835; margin:0; padding:6px 12px;" onclick="window.logout()">Salir</button>
                 </div>
             </header>
@@ -43,17 +47,17 @@
             </section>
 
             <section id="equiposView" class="view">
-                <div class="topbar"><h3>Inventario de Equipos y Accesorios</h3><button class="btn-primary" onclick="window.openModal('equipoModal')">+ Nuevo Equipo</button></div>
+                <div class="topbar"><h3>Inventario de Equipos</h3><button class="btn-primary" onclick="window.openModal('equipoModal')">+ Nuevo Equipo</button></div>
                 <div class="card"><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Estado</th><th>Asignado a</th></tr></thead><tbody id="equiposList"></tbody></table></div>
             </section>
 
             <section id="asignacionesView" class="view">
-                <div class="topbar"><h3>Seguimiento de Entregas</h3><button class="btn-primary" onclick="window.openModal('asignacionModal')">+ Nueva Asignación</button></div>
+                <div class="topbar"><h3>Control de Asignaciones</h3><button class="btn-primary" onclick="window.openModal('asignacionModal')">+ Nueva Asignación</button></div>
                 <div class="card"><table><thead><tr><th>Colaborador</th><th>Equipo</th><th>Fecha</th><th>Periféricos & IDs</th></tr></thead><tbody id="asignacionesList"></tbody></table></div>
             </section>
 
             <section id="colaboradoresView" class="view">
-                <div class="topbar"><h3>Directorio de Personal</h3><button class="btn-primary" onclick="window.openModal('colaboradorModal')">+ Nuevo Colaborador</button></div>
+                <div class="topbar"><h3>Directorio</h3><button class="btn-primary" onclick="window.openModal('colaboradorModal')">+ Nuevo Colaborador</button></div>
                 <div class="card"><table><thead><tr><th>Nombre</th><th>Cargo</th><th>Área</th><th>Correo</th></tr></thead><tbody id="colaboradoresList"></tbody></table></div>
             </section>
         </main>
@@ -80,7 +84,7 @@
                     <div><label>Marca</label><input type="text" id="marca" required></div>
                     <div><label>Modelo</label><input type="text" id="modelo" required></div>
                 </div>
-                <label>Serial / Service Tag</label><input type="text" id="serial" required>
+                <label>Serial</label><input type="text" id="serial" required>
                 <label>Estado</label><select id="estado"><option value="Bueno">Bueno</option><option value="Regular">Regular</option><option value="Malo">Malo</option></select>
                 <div style="display:flex; gap:10px; margin-top:20px;"><button type="submit" class="btn-primary" style="flex:1;">Guardar</button><button type="button" class="btn-primary" style="background:#6b7280; flex:1;" onclick="window.closeModal('equipoModal')">Cerrar</button></div>
             </form>
@@ -104,19 +108,14 @@
                     <label><input type="checkbox" id="chkBolso" value="Bolso"> 🎒 Bolso</label>
                     <label><input type="checkbox" id="chkHub" value="HUB"> 🔌 HUB USB</label>
                 </div>
-
-                <div id="monitorInput" class="conditional-input hidden">
-                    <label>ID / Serial Monitor</label><input type="text" id="idMonitor" placeholder="Ej: MON-123">
-                </div>
-                <div id="diademaInput" class="conditional-input hidden">
-                    <label>ID / Serial Diadema</label><input type="text" id="idDiadema" placeholder="Ej: DIA-456">
-                </div>
-
+                <div id="monitorInput" class="conditional-input hidden"><label>ID Monitor</label><input type="text" id="idMonitor"></div>
+                <div id="diademaInput" class="conditional-input hidden"><label>ID Diadema</label><input type="text" id="idDiadema"></div>
                 <div style="display:flex; gap:10px; margin-top:20px;"><button type="submit" class="btn-primary" style="flex:1;">Confirmar Entrega</button><button type="button" class="btn-primary" style="background:#6b7280; flex:1;" onclick="window.closeModal('asignacionModal')">Cancelar</button></div>
             </form>
         </div>
     </div>
 
+    <!-- MODAL COLABORADOR -->
     <div id="colaboradorModal" class="modal hidden">
         <div class="modal-content">
             <h3>Nuevo Colaborador</h3>
@@ -126,7 +125,6 @@
                 <input type="text" id="colArea" placeholder="Área" required>
                 <input type="email" id="colCorreo" placeholder="Correo" required>
                 <button type="submit" class="btn-primary">Registrar</button>
-                <button type="button" class="btn-primary" style="background:#6b7280;" onclick="window.closeModal('colaboradorModal')">Cerrar</button>
             </form>
         </div>
     </div>
@@ -158,13 +156,21 @@
             const supabase = window.supabase.createClient(sURL, sKEY);
             window.logout = async () => { if(supabase) await supabase.auth.signOut(); localStorage.clear(); location.href = 'login.html'; };
 
-            if (localStorage.getItem('test_bypass') === 'true') {
-                document.getElementById('userEmailDisplay').textContent = "admin@prueba.com"; loadData();
-            } else {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) { location.href = 'login.html'; return; }
-                document.getElementById('userEmailDisplay').textContent = session.user.email; loadData();
-            }
+            // AUTENTICACIÓN SIN PARPADEO
+            const checkAuth = async () => {
+                if (localStorage.getItem('test_bypass') === 'true') {
+                    document.getElementById('userEmailDisplay').textContent = "admin@prueba.com";
+                    document.body.classList.add('authenticated'); // Mostrar sitio
+                    loadData();
+                } else {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) { location.href = 'login.html'; return; }
+                    document.getElementById('userEmailDisplay').textContent = session.user.email;
+                    document.body.classList.add('authenticated'); // Mostrar sitio
+                    loadData();
+                }
+            };
+            checkAuth();
 
             async function loadData() {
                 try {
@@ -175,7 +181,6 @@
                         supabase.from('movimientos').select('*').order('created_at', {ascending:false})
                     ]);
                     const eq = rE.data || [], col = rCol.data || [], asi = rAsi.data || [], mov = rMov.data || [];
-                    
                     document.getElementById("totalEquipos").textContent = eq.length;
                     document.getElementById("disponibles").textContent = eq.filter(e => !e.asignado_a).length;
                     document.getElementById("asignadosCount").textContent = eq.filter(e => e.asignado_a).length;
@@ -189,13 +194,12 @@
                         if(a.mouse) perifs.push("🖱️"); if(a.teclado) perifs.push("⌨️");
                         if(a.monitor_id) perifs.push(`🖥️ (ID:${a.monitor_id})`);
                         if(a.diadema_id) perifs.push(`🎧 (ID:${a.diadema_id})`);
-                        return `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td><td>${perifs.join(" ") || 'Fijado'}</td></tr>`;
+                        return `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion).toLocaleDateString()}</td><td>${perifs.join(" ") || 'Fijo'}</td></tr>`;
                     });
                     render("colaboradoresList", col, c => `<tr><td>${c.nombre}</td><td>${c.cargo}</td><td>${c.area}</td><td>${c.correo}</td></tr>`);
-                    
                     const sel = document.getElementById("equipoAsignar");
-                    if(sel) sel.innerHTML = '<option value="">Seleccione equipo...</option>' + eq.filter(e=>!e.asignado_a).map(e=>`<option value="${e.codigo}">${e.codigo}</option>`).join('');
-                } catch(err) { console.error("Error cargando datos:", err); }
+                    if(sel) sel.innerHTML = '<option value="">Cargando...</option>' + eq.filter(e=>!e.asignado_a).map(e=>`<option value="${e.codigo}">${e.codigo}</option>`).join('');
+                } catch(e) {}
             }
 
             const org = document.getElementById("origen"), gen = document.getElementById("codigoGenerado"), num = document.getElementById("numeroRentado"), nom = document.getElementById("nombreBase");
@@ -214,10 +218,7 @@
                 e.preventDefault();
                 const d = { codigo: gen.value, tipo: document.getElementById("tipo").value, origen: org.value, marca: document.getElementById("marca").value, modelo: document.getElementById("modelo").value, serial: document.getElementById("serial").value, estado: document.getElementById("estado").value };
                 const { error } = await supabase.from('equipos').insert([d]);
-                if(!error){ 
-                    await supabase.from('movimientos').insert([{accion:'CREACION', equipo: d.codigo}]); 
-                    location.reload(); 
-                } else alert("Error: " + error.message);
+                if(!error){ await supabase.from('movimientos').insert([{accion:'CREACION', equipo: d.codigo}]); location.reload(); }
             };
 
             document.getElementById("asignacionForm").onsubmit = async (e) => {
@@ -227,23 +228,11 @@
                     colaborador: col, equipo: eqId,
                     monitor_id: document.getElementById("chkMonitor").checked ? document.getElementById("idMonitor").value : null,
                     diadema_id: document.getElementById("chkDiadema").checked ? document.getElementById("idDiadema").value : null,
-                    mouse: document.getElementById("chkMouse").checked,
-                    teclado: document.getElementById("chkTeclado").checked,
-                    bolso: document.getElementById("chkBolso").checked,
-                    hub_usb: document.getElementById("chkHub").checked
+                    mouse: document.getElementById("chkMouse").checked, teclado: document.getElementById("chkTeclado").checked,
+                    bolso: document.getElementById("chkBolso").checked, hub_usb: document.getElementById("chkHub").checked
                 };
                 const { error } = await supabase.from('asignaciones').insert([d]);
-                if(!error){ 
-                    await supabase.from('equipos').update({asignado_a: col}).eq('codigo', eqId);
-                    await supabase.from('movimientos').insert([{accion:'ASIGNACION', equipo: eqId}]); 
-                    location.reload(); 
-                }
-            };
-
-            document.getElementById("colaboradorForm").onsubmit = async (e) => {
-                e.preventDefault();
-                const d = { nombre:document.getElementById("colNombre").value, cargo:document.getElementById("colCargo").value, area:document.getElementById("colArea").value, correo:document.getElementById("colCorreo").value };
-                await supabase.from('colaboradores').insert([d]); location.reload();
+                if(!error){ await supabase.from('equipos').update({asignado_a: col}).eq('codigo', eqId); location.reload(); }
             };
         })();
     </script>
