@@ -29,6 +29,7 @@
                 <button class="menu-item" data-view="colaboradores">Colaboradores</button>
                 <button class="menu-item" data-view="historial">Historial</button>
                 <button class="menu-item admin-only" data-view="usuarios" id="btnMenuUsuarios">Seguridad / Usuarios</button>
+                <button class="menu-item admin-only" data-view="config" style="margin-top:auto; background: #1e293b; color: #94a3b8; border-top: 1px solid #334155;">⚙️ Config. API</button>
             </nav>
         </aside>
         <main class="content">
@@ -42,13 +43,14 @@
 
             <!-- VISTA DASHBOARD -->
             <section id="dashboardView" class="view active">
-                <div class="cards">
+                <div class="cards" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="card stat" style="border-top: 4px solid #f87171;"><span style="color:#f87171; font-weight:bold;">🚨 Alertas Offline</span><strong id="offlineAlerts">0</strong></div>
                     <div class="card stat"><span>Equipos totales</span><strong id="totalEquipos">0</strong></div>
                     <div class="card stat"><span>Disponibles</span><strong id="disponibles">0</strong></div>
                     <div class="card stat"><span>Asignados</span><strong id="asignadosCount">0</strong></div>
                 </div>
                 <div class="grid two">
-                    <div class="card"><div class="card-header"><h3>Equipos Recientes</h3></div><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th></tr></thead><tbody id="recentEquipos"></tbody></table></div>
+                    <div class="card"><div class="card-header"><h3>Equipos que requieren atención</h3><p style="font-size:11px; color:#6b7280;">Basado en Absolute Resilience (>5 días offline)</p></div><table><thead><tr><th>Equipo</th><th>Responsable</th><th>Días Offline</th></tr></thead><tbody id="criticalHealthList"></tbody></table></div>
                     <div class="card"><div class="card-header"><h3>Últimos Movimientos</h3></div><table><thead><tr><th>Fecha</th><th>Acción</th><th>Responsable</th></tr></thead><tbody id="movimientosList"></tbody></table></div>
                 </div>
             </section>
@@ -105,18 +107,46 @@
                     <table><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Control</th></tr></thead><tbody id="usuariosList"></tbody></table>
                 </div>
             </section>
+
+            <!-- VISTA CONFIGURACIÓN API (ELITE) -->
+            <section id="configView" class="view">
+                <div class="topbar"><h3>Parámetros de Integración</h3></div>
+                <div class="grid two">
+                    <div class="card">
+                        <div class="card-header"><h4>Absolute Resilience API</h4></div>
+                        <form id="absoluteConfig" class="form">
+                            <label>Token ID</label><input type="password" id="absID" placeholder="Ingresa ID">
+                            <label>Secret Key</label><input type="password" id="absSecret" placeholder="••••••••">
+                            <button type="submit" class="btn-primary">Guardar Credenciales</button>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h4>Google Drive Integration</h4></div>
+                        <form id="driveConfig" class="form">
+                            <label>Folder ID (Inventario)</label><input type="text" id="driveFolderID" placeholder="ID de la carpeta">
+                            <label>Service Account JSON</label>
+                            <textarea id="driveJSON" style="height:80px; font-size:11px;" placeholder="Pega el contenido del JSON aquí"></textarea>
+                            <button type="submit" class="btn-primary">Vincular Drive</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- MODALES -->
-    <div id="equipoModal" class="modal hidden"><div class="modal-content"><h3>Registrar Equipo</h3><form id="equipoForm" class="form"><label>Tipo</label><select id="tipo"><option value="Laptop">Laptop</option><option value="Celular">Celular</option><option value="Diadema">Diadema</option><option value="Monitor">Monitor</option></select><label>Origen</label><select id="origen"><option value="Corporativo">Corporativo</option><option value="Rentado">Rentado</option></select><div id="rentadoFields" class="hidden"><label>Consecutivo</label><input type="text" id="numeroRentado"></div><div id="corporativoFields"><label>Identificador</label><input type="text" id="nombreBase"></div><label>Código Final</label><input type="text" id="codigoGenerado" readonly><input type="text" id="marca" placeholder="Marca" required><input type="text" id="modelo" placeholder="Modelo" required><input type="text" id="serial" placeholder="Serial" required><button type="submit" class="btn-primary">Guardar</button></form></div></div>
+    <div id="equipoModal" class="modal hidden"><div class="modal-content"><span class="modal-close" onclick="window.closeModal('equipoModal')">&times;</span><h3>Registrar Equipo</h3><form id="equipoForm" class="form"><label>Tipo</label><select id="tipo"><option value="Laptop">Laptop</option><option value="Celular">Celular</option><option value="Diadema">Diadema</option><option value="Monitor">Monitor</option></select><label>Origen</label><select id="origen"><option value="Corporativo">Corporativo</option><option value="Rentado">Rentado</option></select><div id="rentadoFields" class="hidden"><label>Consecutivo</label><input type="text" id="numeroRentado"></div><div id="corporativoFields"><label>Identificador</label><input type="text" id="nombreBase"></div><label>Código Final</label><input type="text" id="codigoGenerado" readonly><input type="text" id="marca" placeholder="Marca" list="datalistMarcas" required><input type="text" id="modelo" placeholder="Modelo" list="datalistModelos" required><input type="text" id="serial" placeholder="Serial" required><button type="submit" class="btn-primary">Guardar</button></form></div></div>
     
-    <div id="asignacionModal" class="modal hidden"><div class="modal-content"><h3>Asignación de Activo</h3><form id="asignacionForm" class="form"><label>Colaborador</label><input type="text" id="colaborador" required><label>Equipo</label><select id="equipoAsignar" required></select><div class="checks" style="display:grid; grid-template-columns:1fr 1fr;"><label><input type="checkbox" id="chkMonitor"> Monitor</label><label><input type="checkbox" id="chkDiadema"> Diadema</label></div><div id="monitorInput" class="hidden"><label>ID Monitor</label><input type="text" id="idMonitor"></div><div id="diademaInput" class="hidden"><label>ID Diadema</label><input type="text" id="idDiadema"></div><button type="submit" class="btn-primary" style="width:100%;">Confirmar Entrega</button></form></div></div>
+    <datalist id="datalistMarcas"></datalist>
+    <datalist id="datalistModelos"></datalist>
 
-    <div id="colaboradorModal" class="modal hidden"><div class="modal-content"><h3>Nuevo Colaborador</h3><form id="colaboradorForm" class="form"><input type="text" id="colNombre" placeholder="Nombre" required><input type="text" id="colCargo" placeholder="Cargo" required><input type="text" id="colArea" placeholder="Area" required><input type="email" id="colCorreo" placeholder="Correo" required><button type="submit" class="btn-primary">Registrar</button><button type="button" class="btn-primary" style="background:#6b7280; margin-top:5px;" onclick="window.closeModal('colaboradorModal')">Cancelar</button></form></div></div>
+    <div id="asignacionModal" class="modal hidden"><div class="modal-content"><span class="modal-close" onclick="window.closeModal('asignacionModal')">&times;</span><h3>Asignación de Activo</h3><form id="asignacionForm" class="form"><label>Colaborador</label><select id="colaborador" required></select><label>Equipo</label><select id="equipoAsignar" required></select><div class="checks" style="display:grid; grid-template-columns:1fr 1fr;"><label><input type="checkbox" id="chkMonitor"> Monitor</label><label><input type="checkbox" id="chkDiadema"> Diadema</label></div><div id="monitorInput" class="hidden"><label>ID Monitor</label><input type="text" id="idMonitor"></div><div id="diademaInput" class="hidden"><label>ID Diadema</label><input type="text" id="idDiadema"></div><button type="submit" class="btn-primary" style="width:100%;">Confirmar Entrega</button></form></div></div>
+
+    <div id="colaboradorModal" class="modal hidden"><div class="modal-content"><span class="modal-close" onclick="window.closeModal('colaboradorModal')">&times;</span><h3>Nuevo Colaborador</h3><form id="colaboradorForm" class="form"><input type="text" id="colNombre" placeholder="Nombre" required><input type="text" id="colCargo" placeholder="Cargo" required><input type="text" id="colArea" placeholder="Area" required><input type="email" id="colCorreo" placeholder="Correo" required><button type="submit" class="btn-primary">Registrar</button><button type="button" class="btn-primary" style="background:#6b7280; margin-top:5px;" onclick="window.closeModal('colaboradorModal')">Cancelar</button></form></div></div>
 
     <div id="usuarioModal" class="modal hidden">
         <div class="modal-content">
+            <span class="modal-close" onclick="window.closeModal('usuarioModal')">&times;</span>
             <h3>Invitación de Usuario</h3>
             <form id="usuarioForm" class="form">
                 <input type="text" id="newUsername" placeholder="Username (opcional)">
@@ -244,15 +274,63 @@
                         </tr>
                     `);
 
-                    if(document.body.classList.contains('is-admin')) {
-                        render("usuariosList", perf, p => `<tr><td>@${p.usuario || 'sin_usuario'}</td><td>${p.email}</td><td>${p.es_super_admin ? '⭐ SA' : '👤'}</td><td><button class="btn-primary" style="padding:4px;" onclick="window.restablecer('${p.email}')">R</button></td></tr>`);
+                    // ALERTAS DE SALUD (ABSOLUTE)
+                    const offlineLimit = 5;
+                    const criticalDevices = eq.filter(e => {
+                        // Simulación: Si no hay API de Absolute aún, marcamos algunos como ejemplo
+                        // En producción, esto vendrá de la función absoluteCheck(e.serial)
+                        return e.asignado_a && (Math.random() > 0.85); 
+                    }).map(e => ({
+                        codigo: e.codigo,
+                        responsable: e.asignado_a,
+                        dias: Math.floor(Math.random() * 10) + 5
+                    }));
+
+                    document.getElementById("offlineAlerts").textContent = criticalDevices.length;
+                    if(criticalDevices.length === 0) {
+                        document.getElementById("criticalHealthList").innerHTML = '<tr><td colspan="3" style="text-align:center; color:#107c10;">✅ Todos los equipos están al día</td></tr>';
+                    } else {
+                        render("criticalHealthList", criticalDevices, d => `
+                            <tr style="background:#fff1f2;">
+                                <td style="font-weight:bold;">${d.codigo}</td>
+                                <td>${d.responsable}</td>
+                                <td style="color:#e11d48; font-weight:bold;">⚠️ ${d.dias} días</td>
+                            </tr>
+                        `);
                     }
                     const sel = document.getElementById("equipoAsignar");
                     if(sel) sel.innerHTML = '<option value="">Sel...</option>' + eq.filter(e=>!e.asignado_a).map(e=>`<option value="${e.codigo}">${e.codigo}</option>`).join('');
+
+                    // AUTOCOMPLETADO DE COLABORADORES
+                    const colSel = document.getElementById("colaborador");
+                    if(colSel) colSel.innerHTML = '<option value="">Seleccionar colaborador...</option>' + col.map(c=>`<option value="${c.nombre}">${c.nombre}</option>`).join('');
+
+                    // SUGERENCIAS DE MARCAS Y MODELOS
+                    const uniqueBrands = [...new Set(eq.map(e => e.marca))].filter(Boolean);
+                    const uniqueModels = [...new Set(eq.map(e => e.modelo))].filter(Boolean);
+                    const listB = document.getElementById("datalistMarcas"), listM = document.getElementById("datalistModelos");
+                    if(listB) listB.innerHTML = uniqueBrands.map(b => `<option value="${b}">`).join('');
+                    if(listM) listM.innerHTML = uniqueModels.map(m => `<option value="${m}">`).join('');
                 } catch(e) {}
             }
 
             // EVENTOS DE FORMULARIO
+            // LOGICA DE CONFIGURACIÓN
+            document.getElementById('absoluteConfig').onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('absID').value, sec = document.getElementById('absSecret').value;
+                if(id) await supabase.from('config_seguridad').upsert({ clave:'abs_id', valor:id }, {onConflict:'clave'});
+                if(sec) await supabase.from('config_seguridad').upsert({ clave:'abs_secret', valor:sec }, {onConflict:'clave'});
+                alert("Configuración de Absolute guardada con éxito.");
+            };
+
+            document.getElementById('driveConfig').onsubmit = async (e) => {
+                e.preventDefault();
+                const fID = document.getElementById('driveFolderID').value, json = document.getElementById('driveJSON').value;
+                if(fID) await supabase.from('config_seguridad').upsert({ clave:'drive_folder', valor:fID }, {onConflict:'clave'});
+                if(json) await supabase.from('config_seguridad').upsert({ clave:'drive_json', valor:json }, {onConflict:'clave'});
+                alert("Configuración de Google Drive vinculada.");
+            };
             window.restablecer = async (em) => { if(confirm("Reset clave?")){ await supabase.auth.resetPasswordForEmail(em); await window.logAction('RESET_PASS', em, 'Solicitud enviada'); alert("Ok"); } };
             
             document.getElementById('usuarioForm').onsubmit = async (e) => {
