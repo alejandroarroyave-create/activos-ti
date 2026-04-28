@@ -490,13 +490,11 @@
                 let filtrados = window.movimientosData || [];
                 
                 if (desde) {
-                    const d = new Date(desde);
-                    d.setHours(0,0,0,0);
+                    const d = new Date(desde + 'T00:00:00');
                     filtrados = filtrados.filter(m => new Date(m.created_at) >= d);
                 }
                 if (hasta) {
-                    const h = new Date(hasta);
-                    h.setHours(23,59,59,999);
+                    const h = new Date(hasta + 'T23:59:59');
                     filtrados = filtrados.filter(m => new Date(m.created_at) <= h);
                 }
                 window.renderHistorial(filtrados);
