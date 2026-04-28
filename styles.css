@@ -98,6 +98,7 @@ body {
 .content {
     padding: 32px 40px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .topbar {
@@ -298,15 +299,112 @@ td {
     .app {
         grid-template-columns: 1fr;
     }
-
+    
     .sidebar {
+        padding: 12px 20px;
         border-right: none;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border);
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        height: 60px;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(30, 41, 59, 0.8);
+        backdrop-filter: blur(15px);
+    }
+
+    .brand {
+        margin-bottom: 0;
+        gap: 10px;
+    }
+    
+    .brand p, .brand span {
+        display: none;
+    }
+
+    .brand img {
+        max-width: 120px !important;
+        margin-bottom: 0 !important;
+    }
+
+    .menu {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #1e293b;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 6px 10px;
+        border-top: 1px solid var(--border);
+        z-index: 2000;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 -4px 30px rgba(0,0,0,0.5);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .menu-item {
+        padding: 10px 12px;
+        font-size: 11px;
+        text-align: center;
+        flex: 1;
+        min-width: 70px;
+        border-radius: 12px;
+        white-space: nowrap;
+    }
+
+    .content {
+        padding: 20px;
+        padding-bottom: 100px; /* Espacio para el menú inferior */
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .user-box {
+        width: 100%;
+        justify-content: space-between;
+        padding: 10px 15px;
+    }
+
+    .user-box span {
+        font-size: 13px;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .cards,
     .grid.two {
         grid-template-columns: 1fr;
+    }
+
+    .stat strong {
+        font-size: 24px;
+    }
+
+    .card {
+        padding: 15px;
+        border-radius: 20px;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    .modal-content {
+        margin: 10px;
+        padding: 20px;
+        width: calc(100% - 20px);
     }
 }
 
