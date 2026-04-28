@@ -167,14 +167,12 @@
                     if(e) { finalTipo = e.tipo; finalSerial = e.serial; }
                 }
 
-                let extraDetails = detalles || "";
-                if (meta.colaborador) extraDetails += ` | Colab: ${meta.colaborador}`;
-                if (meta.estado_ant) extraDetails += ` | Ant: ${meta.estado_ant}`;
-                if (meta.estado_nue) extraDetails += ` | Nue: ${meta.estado_nue}`;
-
                 await supabase.from('movimientos').insert([{
-                    accion, equipo: ref, detalles: extraDetails, realizado_por: user,
-                    tipo: finalTipo, serial: finalSerial
+                    accion, equipo: ref, detalles, realizado_por: user,
+                    tipo: finalTipo, serial: finalSerial, 
+                    colaborador: meta.colaborador || null,
+                    estado_anterior: meta.estado_ant || null,
+                    estado_nuevo: meta.estado_nue || null
                 }]).then(({error}) => { if (error) alert("Error guardando historial: " + error.message); });
             };
 
