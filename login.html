@@ -18,15 +18,14 @@
         }
         
         body { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
+            display: grid; 
+            place-items: center; 
+            min-height: 100dvh; 
             background: var(--bg);
             margin: 0; 
             font-family: 'Outfit', 'Inter', sans-serif;
             color: var(--text-main);
-            overflow: hidden;
+            overflow-x: hidden;
             position: relative;
         }
 
@@ -122,10 +121,10 @@
         }
         
         .brand-logo-img {
-            width: 100%;
-            max-width: 220px;
-            height: auto;
-            margin-bottom: 24px;
+            width: auto;
+            height: 50px;
+            max-width: 200px;
+            margin-bottom: 20px;
             filter: drop-shadow(0 0 15px rgba(255, 107, 87, 0.2));
             display: inline-block;
         }
@@ -193,17 +192,17 @@
 
         @media (max-width: 480px) {
             .login-card {
-                padding: 30px 20px;
-                margin: 15px;
-                border-radius: 24px;
+                padding: 32px 20px;
+                margin: 0;
+                border-radius: 28px;
+                width: 90%;
             }
-            .brand-logo-img {
-                max-width: 160px;
-            }
+            .brand-container { margin-bottom: 24px; }
+            .brand-logo-img { height: 38px; }
             h2 { font-size: 24px; }
             .waves {
-                height: 20vh;
-                min-height: 150px;
+                height: 18vh;
+                min-height: 140px;
                 opacity: 0.5;
             }
         }
