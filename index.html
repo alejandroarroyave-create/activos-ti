@@ -222,6 +222,12 @@
                         supabase.from('movimientos').select('*').order('created_at', {ascending:false}),
                         supabase.from('perfiles').select('*').order('email', {ascending:true})
                     ]);
+                    
+                    let dbErrors = [rE.error, rC.error, rA.error, rM.error, rP.error].filter(Boolean);
+                    if (dbErrors.length > 0) {
+                        alert("Error desde Base de Datos al cargar:\n" + dbErrors.map(e => e.message).join("\n"));
+                    }
+
                     const eq = rE.data || [], col = rC.data || [], asi = rA.data || [], mov = rM.data || [], perf = rP.data || [];
                     document.getElementById("totalEquipos").textContent=eq.length; document.getElementById("disponibles").textContent=eq.filter(e=>!e.asignado_a).length; document.getElementById("asignadosCount").textContent=eq.filter(e=>e.asignado_a).length;
                     
