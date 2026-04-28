@@ -55,19 +55,19 @@
             <!-- VISTA EQUIPOS -->
             <section id="equiposView" class="view">
                 <div class="topbar"><h3>Inventario de Equipos</h3><button class="btn-primary" onclick="window.openModal('equipoModal')">+ Nuevo Equipo</button></div>
-                <div class="card"><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Asignado</th></tr></thead><tbody id="equiposList"></tbody></table></div>
+                <div class="card"><table><thead><tr><th>Código</th><th>Tipo</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Asignado</th><th>Acciones</th></tr></thead><tbody id="equiposList"></tbody></table></div>
             </section>
 
             <!-- VISTA ASIGNACIONES -->
             <section id="asignacionesView" class="view">
                 <div class="topbar"><h3>Control de Asignaciones</h3><button class="btn-primary" onclick="window.openModal('asignacionModal')">+ Nueva Asignación</button></div>
-                <div class="card"><table><thead><tr><th>Colaborador</th><th>Equipo</th><th>Fecha</th><th>Accesorios</th></tr></thead><tbody id="asignacionesList"></tbody></table></div>
+                <div class="card"><table><thead><tr><th>Colaborador</th><th>Equipo</th><th>Fecha</th><th>Accesorios</th><th>Acciones</th></tr></thead><tbody id="asignacionesList"></tbody></table></div>
             </section>
 
             <!-- VISTA COLABORADORES -->
             <section id="colaboradoresView" class="view">
                 <div class="topbar"><h3>Directorio de Personal</h3><button class="btn-primary" onclick="window.openModal('colaboradorModal')">+ Nuevo Colaborador</button></div>
-                <div class="card"><table><thead><tr><th>Nombre</th><th>Cargo</th><th>Área</th><th>Correo</th></tr></thead><tbody id="colaboradoresList"></tbody></table></div>
+                <div class="card"><table><thead><tr><th>Nombre</th><th>Cargo</th><th>Área</th><th>Correo</th><th>Acciones</th></tr></thead><tbody id="colaboradoresList"></tbody></table></div>
             </section>
 
             <!-- VISTA HISTORIAL MAESTRO -->
@@ -116,7 +116,7 @@
     </div>
 
     <!-- MODALES -->
-    <div id="equipoModal" class="modal hidden"><div class="modal-content"><span class="modal-close" onclick="window.closeModal('equipoModal')">&times;</span><h3>Registrar Equipo</h3><form id="equipoForm" class="form"><label>Tipo</label><select id="tipo"><option value="Laptop">Laptop</option><option value="Celular">Celular</option><option value="Diadema">Diadema</option><option value="Monitor">Monitor</option></select><label>Origen</label><select id="origen"><option value="Corporativo">Corporativo</option><option value="Rentado">Rentado</option></select><div id="rentadoFields" class="hidden"><label>Consecutivo</label><input type="text" id="numeroRentado"></div><div id="corporativoFields"><label>Identificador</label><input type="text" id="nombreBase"></div><label>Código Final</label><input type="text" id="codigoGenerado" readonly><input type="text" id="marca" placeholder="Marca" list="datalistMarcas" required><input type="text" id="modelo" placeholder="Modelo" list="datalistModelos" required><input type="text" id="serial" placeholder="Serial" required><button type="submit" class="btn-primary">Guardar</button></form></div></div>
+    <div id="equipoModal" class="modal hidden"><div class="modal-content"><span class="modal-close" onclick="window.closeModal('equipoModal')">&times;</span><h3>Registrar Equipo</h3><form id="equipoForm" class="form"><label>Tipo</label><select id="tipo"><option value="Laptop">Laptop</option><option value="Celular">Celular</option><option value="Diadema">Diadema</option><option value="Monitor">Monitor</option></select><label>Origen</label><select id="origen"><option value="Corporativo">Corporativo</option><option value="Rentado">Rentado</option><option value="Propio">Propio</option></select><div id="rentadoFields" class="hidden"><label>Consecutivo</label><input type="text" id="numeroRentado"></div><div id="corporativoFields"><label>Identificador</label><input type="text" id="nombreBase"></div><label>Código Final</label><input type="text" id="codigoGenerado" readonly><input type="text" id="marca" placeholder="Marca" list="datalistMarcas" required><input type="text" id="modelo" placeholder="Modelo" list="datalistModelos" required><input type="text" id="serial" placeholder="Serial" required><button type="submit" class="btn-primary">Guardar</button></form></div></div>
     
     <datalist id="datalistMarcas"></datalist>
     <datalist id="datalistModelos"></datalist>
@@ -241,9 +241,9 @@
                     const render = (id, d, f) => { const el = document.getElementById(id); if(el) el.innerHTML = d.map(f).join(''); };
                     render("recentEquipos", eq.slice(0,5), e => `<tr><td>${e.codigo}</td><td>${e.tipo}</td><td>${e.marca}</td></tr>`);
                     render("movimientosList", mov.slice(0,5), m => `<tr><td>${new Date(m.created_at).toLocaleDateString()}</td><td>${m.accion}</td><td>${m.realizado_por}</td></tr>`);
-                    render("equiposList", eq, e => `<tr><td>${e.codigo}</td><td>${e.tipo}</td><td>${e.marca}</td><td>${e.modelo}</td><td>${e.serial}</td><td>${e.asignado_a || '-'}</td></tr>`);
-                    render("asignacionesList", asi, a => `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion || a.created_at).toLocaleDateString()}</td><td>${a.monitor_id?'🖥️':''} ${a.diadema_id?'🎧':''}</td></tr>`);
-                    render("colaboradoresList", col, c => `<tr><td>${c.nombre}</td><td>${c.cargo}</td><td>${c.area}</td><td>${c.correo}</td></tr>`);
+                    render("equiposList", eq, e => `<tr><td>${e.codigo}</td><td>${e.tipo}</td><td>${e.marca}</td><td>${e.modelo}</td><td>${e.serial}</td><td>${e.asignado_a || '-'}</td><td><button onclick="window.eliminarRegistro('equipos', 'codigo', '${e.codigo}')" style="background:transparent;border:none;cursor:pointer;" title="Eliminar">🗑️</button></td></tr>`);
+                    render("asignacionesList", asi, a => `<tr><td>${a.colaborador}</td><td>${a.equipo}</td><td>${new Date(a.fecha_asignacion || a.created_at).toLocaleDateString()}</td><td>${a.monitor_id?'🖥️':''} ${a.diadema_id?'🎧':''}</td><td><button onclick="window.eliminarRegistro('asignaciones', 'id', '${a.id}', '${a.equipo}')" style="background:transparent;border:none;cursor:pointer;" title="Eliminar">🗑️</button></td></tr>`);
+                    render("colaboradoresList", col, c => `<tr><td>${c.nombre}</td><td>${c.cargo}</td><td>${c.area}</td><td>${c.correo}</td><td><button onclick="window.eliminarRegistro('colaboradores', 'id', '${c.id}')" style="background:transparent;border:none;cursor:pointer;" title="Eliminar">🗑️</button></td></tr>`);
                     
                     // HISTORIAL FULL
                     window.movimientosData = mov;
@@ -297,6 +297,29 @@
                     filtrados = filtrados.filter(m => new Date(m.created_at) <= h);
                 }
                 window.renderHistorial(filtrados);
+            };
+
+            window.eliminarRegistro = async (tabla, columna, idValor, extraParam = null) => {
+                if(!confirm(`¿Estás seguro de eliminar permanentemente este registro?`)) return;
+                
+                if (tabla === 'asignaciones' && extraParam) {
+                    await supabase.from('equipos').update({ asignado_a: null }).eq('codigo', extraParam);
+                    await window.logAction('ELIMINAR_ASIGNACION', extraParam, 'Asignación eliminada');
+                } else if (tabla === 'equipos') {
+                    await window.logAction('ELIMINAR_EQUIPO', idValor, 'Equipo eliminado');
+                } else if (tabla === 'colaboradores') {
+                    await window.logAction('ELIMINAR_COLAB', '-', `Colaborador eliminado (ID/Correo): ${idValor}`);
+                }
+
+                // If idValor is "undefined" (e.g. table has no ID column but we tried to use it), fallback to alternate
+                if (idValor === "undefined") {
+                    alert("Error: No se pudo identificar el registro para eliminar (falta el ID).");
+                    return;
+                }
+
+                const { error } = await supabase.from(tabla).delete().eq(columna, idValor);
+                if (!error) location.reload();
+                else alert("Error al eliminar: " + error.message);
             };
 
             // EVENTOS DE FORMULARIO
