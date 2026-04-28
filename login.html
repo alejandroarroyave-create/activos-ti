@@ -18,7 +18,7 @@
 <body>
     <div class="login-card">
         <div class="text-center" style="margin-bottom: 24px;">
-            <div class="brand-logo" style="margin:0 auto 16px; width:64px; height:64px; border-radius:16px; background:#ff6b57; color:#fff; font-size:32px; font-weight:bold; display:flex; justify-content:center; align-items:center;">D</div>
+            <img src="logo.png" alt="Dataico" style="display: block; margin: 0 auto 16px; max-width: 200px; height: auto;">
             <h2 id="loginTitle">Gestión de Activos</h2>
             <p id="loginSubtitle" style="color:#6b7280; font-size:14px;">Ingresa tus credenciales</p>
         </div>
@@ -80,8 +80,8 @@
                     showSection('changePassSection');
                     document.getElementById('passMessage').textContent = "🔄 Restaurando contraseña desde correo...";
                     
-                    const { data: mfa } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-                    if (mfa && mfa.nextLevel === 'aal2' && mfa.currentLevel === 'aal1') {
+                    const { data: factors } = await supabase.auth.mfa.listFactors();
+                    if (factors && factors.all.length > 0) {
                         document.getElementById('mfaRecoveryContainer').classList.remove('hidden');
                         document.getElementById('mfaRecoveryCode').required = true;
                     }
