@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Activos TI - Panel Administrativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
         body { visibility: hidden; opacity: 0; transition: opacity 0.3s ease; }
@@ -21,7 +22,10 @@
 <body>
     <div class="app">
         <aside class="sidebar">
-            <div class="brand"><img src="logo.png" alt="Dataico" style="height: 45px; width: auto; border-radius: 8px;"><div><h1>Activos TI</h1><p>Control Total</p></div></div>
+            <div class="brand" style="flex-direction: column; text-align: center; margin-bottom: 50px;">
+                <img src="logo.png" alt="Dataico" style="width: 100%; max-width: 160px; height: auto; margin-bottom: 10px;">
+                <span style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px;">Gestión de Activos</span>
+            </div>
             <nav class="menu">
                 <button class="menu-item active" data-view="dashboard">Dashboard</button>
                 <button class="menu-item" data-view="equipos">Equipos</button>
