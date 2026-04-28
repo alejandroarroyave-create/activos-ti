@@ -8,39 +8,224 @@
     <!-- QR Code Library Cargada Primero -->
     <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6; margin: 0; }
-        .login-card { width: 100%; max-width: 400px; padding: 32px; background: #fff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        :root {
+            --primary: #ff6b57;
+            --primary-dark: #e85a47;
+            --bg: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+        
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: var(--bg);
+            margin: 0; 
+            font-family: 'Outfit', 'Inter', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(at 0% 0%, rgba(255, 107, 87, 0.15) 0px, transparent 50%),
+                        radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+        }
+
+        /* Efecto de orbes flotantes más sutiles */
+        .orb {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            filter: blur(140px);
+            border-radius: 50%;
+            opacity: 0.15; /* Menos brillante */
+            z-index: 2;
+        }
+
+        /* Estilos para las ondas inferiores */
+        .waves {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 15vh;
+            margin-bottom: -7px; /* Fix para gaps en algunos navegadores */
+            min-height: 100px;
+            max-height: 150px;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        .parallax > use {
+            animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+        }
+        .parallax > use:nth-child(1) { animation-delay: -2s; animation-duration: 7s; }
+        .parallax > use:nth-child(2) { animation-delay: -3s; animation-duration: 10s; }
+        .parallax > use:nth-child(3) { animation-delay: -4s; animation-duration: 13s; }
+        .parallax > use:nth-child(4) { animation-delay: -5s; animation-duration: 20s; }
+
+        @keyframes move-forever {
+            0% { transform: translate3d(-90px,0,0); }
+            100% { transform: translate3d(85px,0,0); }
+        }
+
+        .orb-1 {
+            background: radial-gradient(circle, var(--primary), transparent);
+            top: -10%;
+            left: -10%;
+            animation: float1 15s infinite alternate ease-in-out;
+        }
+
+        .orb-2 {
+            background: radial-gradient(circle, #3b82f6, transparent);
+            bottom: -10%;
+            right: -10%;
+            animation: float2 18s infinite alternate ease-in-out;
+        }
+
+        @keyframes float1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(100px, 50px) scale(1.1); }
+        }
+
+        @keyframes float2 {
+            0% { transform: translate(0, 0) scale(1.1); }
+            100% { transform: translate(-80px, -60px) scale(1); }
+        }
+
+        .login-card { 
+            width: 100%; 
+            max-width: 440px; 
+            padding: 48px; 
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 32px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand-container {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .brand-logo-img {
+            width: 100%;
+            max-width: 220px;
+            height: auto;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 0 15px rgba(255, 107, 87, 0.2));
+            display: inline-block;
+        }
+
+        h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin: 0; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p { color: var(--text-dim); font-size: 16px; margin-top: 10px; }
+
+        .form { margin-top: 32px; }
+        .form label { display: block; font-size: 13px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        
+        .input-group { position: relative; margin-bottom: 24px; }
+        
+        .form input { 
+            width: 100%; 
+            padding: 14px 18px; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            background: rgba(15, 23, 42, 0.6); 
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 4px rgba(255, 107, 87, 0.15);
+        }
+
+        .btn-primary { 
+            width: 100%; 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 16px; 
+            font-size: 16px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px -5px rgba(255, 107, 87, 0.4);
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px rgba(255, 107, 87, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
         .hidden { display: none !important; }
-        .text-center { text-align: center; }
-        .secret-box { font-family: monospace; background: #f9fafb; padding: 10px; border: 1px solid #d1d5db; border-radius: 4px; margin: 10px 0; font-size: 14px; word-break: break-all; }
+
+        /* Estilo para el mensaje de cambio de clave */
+        #passMessage {
+            background: rgba(255, 107, 87, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-weight: 600;
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="background-glow"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
     <div class="login-card">
-        <div class="text-center" style="margin-bottom: 24px;">
-            <img src="logo.png" alt="Dataico" style="display: block; margin: 0 auto 16px; max-width: 200px; height: auto;">
+        <div class="brand-container">
+            <img src="logo.png" alt="Dataico" class="brand-logo-img">
             <h2 id="loginTitle">Gestión de Activos</h2>
-            <p id="loginSubtitle" style="color:#6b7280; font-size:14px;">Ingresa tus credenciales</p>
+            <p id="loginSubtitle">Ingresa tus credenciales para continuar</p>
         </div>
 
         <form id="loginForm" class="form">
             <label>Correo o Usuario</label>
-            <input type="text" id="userInput" required>
+            <input type="text" id="userInput" placeholder="ejemplo@correo.com" required>
             <label>Contraseña</label>
-            <input type="password" id="password" required>
-            <button type="submit" class="btn-primary" style="width:100%; background:#ff6b57; margin-top:10px;">Entrar</button>
+            <input type="password" id="password" placeholder="••••••••" required>
+            <button type="submit" class="btn-primary">Entrar al Sistema</button>
         </form>
 
         <div id="changePassSection" class="hidden">
-            <p id="passMessage" style="color:#ef4444; font-weight:bold; margin-bottom:15px; font-size:14px;">🛠️ Seguridad Activada: Debes actualizar tu contraseña.</p>
+            <div id="passMessage"></div>
             <form id="changePassForm" class="form">
-                <input type="password" id="newPassword" placeholder="Nueva Contraseña" required minlength="6">
-                <input type="password" id="confirmPassword" placeholder="Confirmar Contraseña" required minlength="6">
-                <div id="mfaRecoveryContainer" class="hidden" style="margin-bottom:10px;">
-                    <label style="font-size:12px; color:#6b7280;">Código 2FA (Authenticator):</label>
-                    <input type="text" id="mfaRecoveryCode" maxlength="6" style="text-align:center; font-size:20px; letter-spacing:4px;" placeholder="000000">
+                <label>Nueva Contraseña</label>
+                <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
+                <label>Confirmar Contraseña</label>
+                <input type="password" id="confirmPassword" placeholder="Repite tu contraseña" required minlength="6">
+                
+                <div id="mfaRecoveryContainer" class="hidden" style="margin-bottom:20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <label style="color: var(--primary); margin-bottom: 12px;">Código 2FA Requerido:</label>
+                    <input type="text" id="mfaRecoveryCode" maxlength="6" style="text-align:center; font-size:24px; letter-spacing:8px; background: rgba(0,0,0,0.3);" placeholder="000000">
                 </div>
-                <button type="submit" class="btn-primary" style="width:100%;">Cambiar y Seguir</button>
+                
+                <button type="submit" class="btn-primary">Actualizar y Entrar</button>
             </form>
         </div>
 
@@ -58,14 +243,28 @@
         </div>
 
         <div id="mfaSection" class="hidden text-center">
-            <h3>Verificación 2FA</h3>
-            <p style="font-size:14px; color:#6b7280;">Ingresa el código de 6 dígitos:</p>
+            <h3 style="font-size: 22px; margin-bottom: 12px;">Verificación de Identidad</h3>
+            <p style="margin-bottom: 30px;">Ingresa el código de 6 dígitos de tu aplicación Authenticator para continuar.</p>
             <form id="mfaForm" class="form">
-                <input type="text" id="mfaCode" required maxlength="6" style="text-align:center; font-size:24px; letter-spacing:4px;">
-                <button type="submit" class="btn-primary" style="width:100%;">Verificar</button>
+                <input type="text" id="mfaCode" required maxlength="6" style="text-align:center; font-size:32px; letter-spacing:12px; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.1); color: var(--primary); font-weight: 700;" placeholder="000000">
+                <button type="submit" class="btn-primary">Verificar y Acceder</button>
             </form>
         </div>
     </div>
+
+    <!-- SVG de ondas animadas -->
+    <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+    <defs>
+    <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+    </defs>
+    <g class="parallax">
+    <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.05)" />
+    <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.05)" />
+    <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.05)" />
+    <use xlink:href="#gentle-wave" x="48" y="7" fill="#ff6b57" opacity="0.1" />
+    </g>
+    </svg>
 
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
